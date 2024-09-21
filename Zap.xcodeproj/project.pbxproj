@@ -3,23 +3,56 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 60;
+	objectVersion = 70;
 	objects = {
 
 /* Begin PBXBuildFile section */
 		A293D0B12C9B0941005F0A3C /* ZapApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A293D0B02C9B0941005F0A3C /* ZapApp.swift */; };
-		A293D0B32C9B0941005F0A3C /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A293D0B22C9B0941005F0A3C /* ContentView.swift */; };
 		A293D0B52C9B0942005F0A3C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A293D0B42C9B0942005F0A3C /* Assets.xcassets */; };
 		A293D0B82C9B0942005F0A3C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A293D0B72C9B0942005F0A3C /* Preview Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A2378E5A2C9B16CB0041C746 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		A293D0AD2C9B0941005F0A3C /* Zap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A293D0B02C9B0941005F0A3C /* ZapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZapApp.swift; sourceTree = "<group>"; };
-		A293D0B22C9B0941005F0A3C /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A293D0B42C9B0942005F0A3C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A293D0B72C9B0942005F0A3C /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A2AF7C172C9ED0B6002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				AudioNoteView.swift,
+				AudioPlayerInlineView.swift,
+				AudioPlayerView.swift,
+				ContentView.swift,
+				HomeView.swift,
+				ImageCache.swift,
+				ImageFullscreenView.swift,
+				ImagePicker.swift,
+				NoteRowView.swift,
+				SavedNotesView.swift,
+				TextNoteView.swift,
+				VideoPlayerView.swift,
+				VideoThumbnailView.swift,
+			);
+			target = A293D0AC2C9B0941005F0A3C /* Zap */;
+		};
+		A2AF7C192C9ED10A002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				NotesViewModel.swift,
+			);
+			target = A293D0AC2C9B0941005F0A3C /* Zap */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		A2AF7C132C9ECFAE002DAC5A /* Models */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A2AF7C192C9ED10A002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Models; sourceTree = "<group>"; };
+		A2AF7C162C9ED0B0002DAC5A /* Views */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (A2AF7C172C9ED0B6002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = Views; sourceTree = "<group>"; };
+/* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A293D0AA2C9B0941005F0A3C /* Frameworks */ = {
@@ -51,8 +84,10 @@
 		A293D0AF2C9B0941005F0A3C /* Zap */ = {
 			isa = PBXGroup;
 			children = (
+				A2378E5A2C9B16CB0041C746 /* Info.plist */,
 				A293D0B02C9B0941005F0A3C /* ZapApp.swift */,
-				A293D0B22C9B0941005F0A3C /* ContentView.swift */,
+				A2AF7C162C9ED0B0002DAC5A /* Views */,
+				A2AF7C132C9ECFAE002DAC5A /* Models */,
 				A293D0B42C9B0942005F0A3C /* Assets.xcassets */,
 				A293D0B62C9B0942005F0A3C /* Preview Content */,
 			);
@@ -137,7 +172,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A293D0B32C9B0941005F0A3C /* ContentView.swift in Sources */,
 				A293D0B12C9B0941005F0A3C /* ZapApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -272,8 +306,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Zap/Preview Content\"";
+				DEVELOPMENT_TEAM = QHFBWJ62GY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Zap/Info.plist;
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -300,8 +337,11 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "\"Zap/Preview Content\"";
+				DEVELOPMENT_TEAM = QHFBWJ62GY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Zap/Info.plist;
+				INFOPLIST_KEY_NSFileProviderDomainUsageDescription = "";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

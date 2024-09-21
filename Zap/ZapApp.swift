@@ -9,9 +9,12 @@ import SwiftUI
 
 @main
 struct ZapApp: App {
+    @StateObject private var viewModel = NotesViewModel()
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(viewModel)
         }
     }
 }
