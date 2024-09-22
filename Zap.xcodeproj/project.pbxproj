@@ -28,6 +28,7 @@
 				AudioPlayerInlineView.swift,
 				AudioPlayerView.swift,
 				ContentView.swift,
+				FullScreenMediaView.swift,
 				HomeView.swift,
 				ImageCache.swift,
 				ImageFullscreenView.swift,
@@ -35,7 +36,6 @@
 				NoteRowView.swift,
 				SavedNotesView.swift,
 				TextNoteView.swift,
-				VideoPlayerView.swift,
 				VideoThumbnailView.swift,
 			);
 			target = A293D0AC2C9B0941005F0A3C /* Zap */;
@@ -43,6 +43,7 @@
 		A2AF7C192C9ED10A002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				NoteItem.swift,
 				NotesViewModel.swift,
 			);
 			target = A293D0AC2C9B0941005F0A3C /* Zap */;

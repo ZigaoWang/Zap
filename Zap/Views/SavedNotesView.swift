@@ -9,29 +9,27 @@ import SwiftUI
 
 struct SavedNotesView: View {
     @EnvironmentObject var viewModel: NotesViewModel
-    
+
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack {
-                    ForEach(viewModel.notes) { note in
-                        NoteRowView(note: note)
-                    }
-                    .onDelete(perform: viewModel.deleteNote)
+            List {
+                ForEach(viewModel.notes) { note in
+                    NoteRowView(note: note)
                 }
+                .onDelete(perform: deleteNotes)
             }
-            .background(Color(UIColor.systemGroupedBackground))
-            .navigationTitle("已保存的笔记")
-            .toolbar {
-                EditButton()
-            }
+            .listStyle(InsetGroupedListStyle())
+            .navigationTitle("Saved Notes")
         }
+    }
+    
+    func deleteNotes(at offsets: IndexSet) {
+        viewModel.deleteNotes(at: offsets)
     }
 }
 
 struct SavedNotesView_Previews: PreviewProvider {
     static var previews: some View {
-        SavedNotesView()
-            .environmentObject(NotesViewModel())
+        SavedNotesView().environmentObject(NotesViewModel())
     }
 }

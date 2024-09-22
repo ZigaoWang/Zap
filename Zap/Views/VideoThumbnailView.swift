@@ -7,64 +7,51 @@
 
 import SwiftUI
 import AVFoundation
-import UIKit // 确保导入 UIKit
 
 struct VideoThumbnailView: View {
     let videoURL: URL
-    @State private var thumbnail: UIImage? = nil
-
+    @State private var thumbnail: UIImage?
+    
     var body: some View {
-        ZStack {
-            if let thumb = thumbnail {
-                Image(uiImage: thumb)
+        Group {
+            if let thumbnail = thumbnail {
+                Image(uiImage: thumbnail)
                     .resizable()
-                    .scaledToFill()
-                    .overlay(
-                        Image(systemName: "play.circle.fill")
-                            .resizable()
-                            .frame(width: 50, height: 50)
-                            .foregroundColor(.white.opacity(0.7))
-                    )
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 100)
+                    .clipped()
             } else {
-                Color.gray.opacity(0.3)
-                    .overlay(
-                        ProgressView()
-                    )
+                Color.gray
+                    .frame(height: 100)
+                    .overlay(ProgressView())
             }
         }
         .onAppear {
-            loadThumbnail()
+            generateThumbnail()
         }
     }
-
-    func loadThumbnail() {
-        let cacheKey = videoURL.absoluteString
-        if let cachedImage = ImageCache.shared.getImage(forKey: cacheKey) {
-            self.thumbnail = cachedImage
-            return
-        }
-
-        DispatchQueue.global().async {
+    
+    private func generateThumbnail() {
+        DispatchQueue.global(qos: .background).async {
             let asset = AVAsset(url: videoURL)
-            let assetImgGenerate = AVAssetImageGenerator(asset: asset)
-            assetImgGenerate.appliesPreferredTrackTransform = true
-            let time = CMTime(seconds: 1, preferredTimescale: 60)
+            let imageGenerator = AVAssetImageGenerator(asset: asset)
+            imageGenerator.appliesPreferredTrackTransform = true
+            
             do {
-                let img = try assetImgGenerate.copyCGImage(at: time, actualTime: nil)
-                let uiImage = UIImage(cgImage: img)
-                ImageCache.shared.setImage(uiImage, forKey: cacheKey)
+                let cgImage = try imageGenerator.copyCGImage(at: .zero, actualTime: nil)
                 DispatchQueue.main.async {
-                    self.thumbnail = uiImage
+                    thumbnail = UIImage(cgImage: cgImage)
                 }
             } catch {
-                print("无法生成缩略图: \(error.localizedDescription)")
+                print("Error generating thumbnail: \(error.localizedDescription)")
             }
         }
     }
 }
 
+
 struct VideoThumbnailView_Previews: PreviewProvider {
     static var previews: some View {
-        VideoThumbnailView(videoURL: Bundle.main.url(forResource: "sample", withExtension: "mp4")!)
+        VideoThumbnailView(videoURL: URL(fileURLWithPath: ""))
     }
 }

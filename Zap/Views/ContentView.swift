@@ -8,26 +8,28 @@
 import SwiftUI
 
 struct ContentView: View {
+    @StateObject var viewModel = NotesViewModel()
+
     var body: some View {
         TabView {
             HomeView()
                 .tabItem {
                     Image(systemName: "house.fill")
-                    Text("主页")
+                    Text("Home")
                 }
             
             SavedNotesView()
                 .tabItem {
-                    Image(systemName: "tray.full.fill")
-                    Text("已保存")
+                    Image(systemName: "folder.fill")
+                    Text("Saved")
                 }
         }
+        .environmentObject(viewModel)
     }
 }
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
         ContentView()
-            .environmentObject(NotesViewModel())
     }
 }

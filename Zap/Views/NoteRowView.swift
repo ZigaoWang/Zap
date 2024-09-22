@@ -9,88 +9,40 @@ import SwiftUI
 
 struct NoteRowView: View {
     let note: NoteItem
-    @EnvironmentObject var viewModel: NotesViewModel
-
-    @State private var showImageFullScreen = false
-    @State private var selectedImage: UIImage?
-    @State private var showVideoPlayer = false
+    @State private var showFullScreen = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // 时间戳显示
-            Text("创建时间: \(formattedDate(note.timestamp))")
+        VStack(alignment: .leading) {
+            Text(note.timestamp, style: .date)
                 .font(.caption)
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
 
-            // 笔记内容根据类型展示
             switch note.type {
-            case .text(let text):
-                Text(text)
-                    .padding()
-                    .background(Color.blue.opacity(0.1))
-                    .cornerRadius(8)
-
-            case .audio(let url, _):
-                AudioPlayerInlineView(url: url)
-                    .padding(.vertical, 5)
-
+            case .text(let content):
+                Text(content)
+                    .lineLimit(3)
+            case .audio(let url, let duration):
+                AudioPlayerView(url: url, duration: duration)
             case .photo(let url):
-                if let uiImage = UIImage(contentsOfFile: url.path) {
-                    Image(uiImage: uiImage)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 200)
-                        .clipped()
-                        .cornerRadius(10)
-                        .onTapGesture {
-                            selectedImage = uiImage
-                            showImageFullScreen = true
-                        }
-                        .sheet(isPresented: $showImageFullScreen) {
-                            if let image = selectedImage {
-                                ImageFullscreenView(image: image, isPresented: $showImageFullScreen)
-                            }
-                        }
-                }
-
+                Image(uiImage: UIImage(contentsOfFile: url.path) ?? UIImage())
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 100)
+                    .onTapGesture { showFullScreen = true }
             case .video(let url, _):
                 VideoThumbnailView(videoURL: url)
-                    .frame(height: 200)
-                    .cornerRadius(10)
-                    .onTapGesture {
-                        showVideoPlayer = true
-                    }
-                    .sheet(isPresented: $showVideoPlayer) {
-                        VideoPlayerView(url: url, isPresented: $showVideoPlayer)
-                    }
+                    .onTapGesture { showFullScreen = true }
             }
         }
-        .padding()
-        .background(Color.white)
-        .cornerRadius(15)
-        .shadow(color: Color.gray.opacity(0.2), radius: 5, x: 0, y: 5)
-        .padding([.horizontal, .top], 10)
-    }
-
-    // 格式化日期显示
-    func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        formatter.timeStyle = .short
-        formatter.locale = Locale(identifier: "zh_CN")
-        return formatter.string(from: date)
+        .padding(.vertical, 8)
+        .fullScreenCover(isPresented: $showFullScreen) {
+            FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
     }
 }
 
 struct NoteRowView_Previews: PreviewProvider {
     static var previews: some View {
-        NoteRowView(
-            note: NoteItem(
-                id: UUID(),
-                timestamp: Date(),
-                type: .audio(Bundle.main.url(forResource: "sample", withExtension: "m4a")!, 120.0)
-            )
-        )
-        .environmentObject(NotesViewModel())
+        NoteRowView(note: NoteItem(id: UUID(), timestamp: Date(), type: .text("Sample text note")))
     }
 }

@@ -6,214 +6,96 @@
 //
 
 import SwiftUI
-import AVFoundation
+
+enum ImagePickerDestination {
+    case photoVideo
+    case cameraPhotoVideo
+}
 
 struct HomeView: View {
-@EnvironmentObject var viewModel: NotesViewModel
-@State private var isRecording = false
-@State private var audioRecorder: AVAudioRecorder?
-@State private var audioFilename: URL?
+    @EnvironmentObject var viewModel: NotesViewModel
+    @State private var showingImagePicker = false
+    @State private var imagePickerDestination: ImagePickerDestination = .photoVideo
+    @State private var showingTextNote = false
 
-@State private var showingImagePicker = false
-@State private var imagePickerDestination: ImagePickerDestination = .photoVideo
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
+                    hapticFeedback()
+                    showingTextNote = true
+                }
 
-var body: some View {
-    NavigationView {
-        VStack(spacing: 40) {
-            // Zap Text! 按钮
-            NavigationLink(destination: TextNoteView()) {
-                HStack {
-                    Image(systemName: "text.justify")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                    Text("Zap Text!")
-                        .font(.headline)
-                        .foregroundColor(.white)
+                ZapButton(title: viewModel.isRecording ? "Stop Recording" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
+                    hapticFeedback()
+                    if viewModel.isRecording {
+                        viewModel.stopRecording()
+                    } else {
+                        viewModel.startRecording()
+                    }
                 }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 70)
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [Color.blue, Color.purple]),
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: Color.purple.opacity(0.3), radius: 10, x: 0, y: 5)
+
+                ZapButton(title: "Choose from Album", icon: "photo.on.rectangle", color: .orange) {
+                    hapticFeedback()
+                    imagePickerDestination = .photoVideo
+                    showingImagePicker = true
+                }
+
+                ZapButton(title: "Zap Photo/Video", icon: "camera", color: .purple) {
+                    hapticFeedback()
+                    imagePickerDestination = .cameraPhotoVideo
+                    showingImagePicker = true
+                }
             }
-            
-            // Zap Audio! 按钮
-            Button(action: {
-                if isRecording {
-                    stopRecording()
-                } else {
-                    startRecording()
-                }
-            }) {
-                HStack {
-                    Image(systemName: isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                    Text(isRecording ? "停止录音" : "Zap Audio!")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 70)
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [isRecording ? Color.red : Color.green, isRecording ? Color.orange : Color.yellow]),
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: (isRecording ? Color.orange : Color.yellow).opacity(0.3), radius: 10, x: 0, y: 5)
-            }
-            
-            // Zap Photo/Video! 从图库选择按钮
-            Button(action: {
-                imagePickerDestination = .photoVideo
-                showingImagePicker = true
-            }) {
-                HStack {
-                    Image(systemName: "photo.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                    Text("从图库选择")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 70)
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [Color.orange, Color.pink]),
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: Color.pink.opacity(0.3), radius: 10, x: 0, y: 5)
-            }
+            .padding()
+            .navigationTitle("Zap")
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(destination: imagePickerDestination, viewModel: viewModel)
+                ImagePicker(destination: imagePickerDestination)
             }
-            
-            // 新增：Zap Photo! 拍摄照片按钮
-            Button(action: {
-                imagePickerDestination = .photo
-                showingImagePicker = true
-            }) {
-                HStack {
-                    Image(systemName: "camera.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                    Text("拍摄照片")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 70)
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [Color.green, Color.teal]),
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: Color.teal.opacity(0.3), radius: 10, x: 0, y: 5)
+            .sheet(isPresented: $showingTextNote) {
+                TextNoteView()
             }
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(destination: imagePickerDestination, viewModel: viewModel)
-            }
-            
-            // 新增：Zap Video! 拍摄视频按钮
-            Button(action: {
-                imagePickerDestination = .video
-                showingImagePicker = true
-            }) {
-                HStack {
-                    Image(systemName: "video.fill")
-                        .resizable()
-                        .frame(width: 40, height: 40)
-                        .foregroundColor(.white)
-                    Text("拍摄视频")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                }
-                .padding()
-                .frame(maxWidth: .infinity, minHeight: 70)
-                .background(
-                    LinearGradient(gradient: Gradient(colors: [Color.purple, Color.indigo]),
-                                   startPoint: .topLeading,
-                                   endPoint: .bottomTrailing)
-                )
-                .cornerRadius(20)
-                .shadow(color: Color.indigo.opacity(0.3), radius: 10, x: 0, y: 5)
-            }
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(destination: imagePickerDestination, viewModel: viewModel)
-            }
-            
-            Spacer()
         }
-        .padding()
-        .background(
-            LinearGradient(gradient: Gradient(colors: [Color.purple.opacity(0.3), Color.blue.opacity(0.3)]), startPoint: .topLeading, endPoint: .bottomTrailing)
-                .edgesIgnoringSafeArea(.all)
-        )
-        .navigationTitle("Zap")
+    }
+
+    func hapticFeedback() {
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
     }
 }
 
-// 开始录音
-func startRecording() {
-    let audioSession = AVAudioSession.sharedInstance()
-    do {
-        try audioSession.setCategory(.record, mode: .default, options: [])
-        try audioSession.setActive(true)
-        
-        let documentsDirectory = FileManager.default.urls(
-            for: .documentDirectory, in: .userDomainMask
-        )[0]
-        let filename = UUID().uuidString + ".m4a"
-        let fileURL = documentsDirectory.appendingPathComponent(filename)
-        audioFilename = fileURL
-        
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 12000,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
-        
-        audioRecorder = try AVAudioRecorder(url: fileURL, settings: settings)
-        audioRecorder?.record()
-        
-        isRecording = true
-    } catch {
-        print("录音失败: \(error.localizedDescription)")
-        // 移除提示信息
+struct ZapButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .frame(maxWidth: .infinity)
+            .padding()
+            .background(color)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
+        .buttonStyle(SpringButtonStyle())
     }
 }
 
-// 停止录音并保存
-func stopRecording() {
-    audioRecorder?.stop()
-    isRecording = false
-    if let url = audioFilename {
-        // 获取持续时间
-        let asset = AVURLAsset(url: url)
-        let duration = CMTimeGetSeconds(asset.duration)
-        viewModel.addAudioNote(url: url, duration: duration)
+struct SpringButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .animation(.spring(), value: configuration.isPressed)
     }
-    audioRecorder = nil
-    audioFilename = nil
-}
 }
 
 struct HomeView_Previews: PreviewProvider {
-static var previews: some View {
-HomeView()
-.environmentObject(NotesViewModel())
-}
+    static var previews: some View {
+        HomeView().environmentObject(NotesViewModel())
+    }
 }
