@@ -9,9 +9,17 @@ import SwiftUI
 import AVFoundation
 
 class NotesViewModel: ObservableObject {
-    @Published var notes: [NoteItem] = []
+    @Published var notes: [NoteItem] = [] {
+        didSet {
+            saveNotes()
+        }
+    }
     @Published var isRecording = false
     private var audioRecorder: AVAudioRecorder?
+
+    init() {
+        loadNotes()
+    }
 
     func addTextNote(_ text: String) {
         let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .text(text))
@@ -35,6 +43,20 @@ class NotesViewModel: ObservableObject {
 
     func deleteNotes(at offsets: IndexSet) {
         notes.remove(atOffsets: offsets)
+    }
+
+    private func saveNotes() {
+        if let encoded = try? JSONEncoder().encode(notes) {
+            UserDefaults.standard.set(encoded, forKey: "savedNotes")
+        }
+    }
+
+    private func loadNotes() {
+        if let savedNotes = UserDefaults.standard.data(forKey: "savedNotes") {
+            if let decodedNotes = try? JSONDecoder().decode([NoteItem].self, from: savedNotes) {
+                notes = decodedNotes
+            }
+        }
     }
 
     func startRecording() {
