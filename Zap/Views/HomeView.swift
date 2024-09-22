@@ -7,15 +7,10 @@
 
 import SwiftUI
 
-enum ImagePickerDestination {
-    case photoVideo
-    case cameraPhotoVideo
-}
-
 struct HomeView: View {
     @EnvironmentObject var viewModel: NotesViewModel
     @State private var showingImagePicker = false
-    @State private var imagePickerDestination: ImagePickerDestination = .photoVideo
+    @State private var showingCameraPicker = false
     @State private var showingTextNote = false
 
     var body: some View {
@@ -37,20 +32,21 @@ struct HomeView: View {
 
                 ZapButton(title: "Choose from Album", icon: "photo.on.rectangle", color: .orange) {
                     hapticFeedback()
-                    imagePickerDestination = .photoVideo
                     showingImagePicker = true
                 }
 
                 ZapButton(title: "Zap Photo/Video", icon: "camera", color: .purple) {
                     hapticFeedback()
-                    imagePickerDestination = .cameraPhotoVideo
-                    showingImagePicker = true
+                    showingCameraPicker = true
                 }
             }
             .padding()
             .navigationTitle("Zap")
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(destination: imagePickerDestination)
+                ImagePicker(sourceType: .photoLibrary)
+            }
+            .sheet(isPresented: $showingCameraPicker) {
+                ImagePicker(sourceType: .camera)
             }
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()
@@ -74,10 +70,11 @@ struct ZapButton: View {
         Button(action: action) {
             HStack {
                 Image(systemName: icon)
+                    .font(.system(size: 24))
                 Text(title)
+                    .font(.headline)
             }
-            .frame(maxWidth: .infinity)
-            .padding()
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(color)
             .foregroundColor(.white)
             .cornerRadius(10)
