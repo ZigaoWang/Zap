@@ -38,15 +38,23 @@ struct ImagePicker: UIViewControllerRepresentable {
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
-                saveToAlbum(image: image)
                 let imageURL = saveImageToDocuments(image)
                 parent.viewModel.addPhotoNote(url: imageURL)
+                
+                // Only save to album if the source is camera
+                if parent.sourceType == .camera {
+                    saveToAlbum(image: image)
+                }
             } else if let videoURL = info[.mediaURL] as? URL {
-                saveToAlbum(videoURL: videoURL)
                 let savedVideoURL = saveVideoToDocuments(videoURL)
                 let asset = AVAsset(url: savedVideoURL)
                 let duration = asset.duration.seconds
                 parent.viewModel.addVideoNote(url: savedVideoURL, duration: duration)
+                
+                // Only save to album if the source is camera
+                if parent.sourceType == .camera {
+                    saveToAlbum(videoURL: videoURL)
+                }
             }
             
             parent.presentationMode.wrappedValue.dismiss()
