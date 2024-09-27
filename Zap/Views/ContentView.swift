@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var viewModel = NotesViewModel()
+    @StateObject var appearanceManager = AppearanceManager()
 
     var body: some View {
         TabView {
@@ -23,13 +24,17 @@ struct ContentView: View {
                     Image(systemName: "folder.fill")
                     Text("Saved")
                 }
+            
+            SettingsView()
+                .tabItem {
+                    Image(systemName: "gear")
+                    Text("Settings")
+                }
         }
         .environmentObject(viewModel)
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
+        .environmentObject(appearanceManager)
+        .environment(\.customFontSize, appearanceManager.fontSizeValue)
+        .preferredColorScheme(appearanceManager.colorScheme)
+        .accentColor(appearanceManager.accentColor)
     }
 }
