@@ -21,24 +21,28 @@ class NotesViewModel: ObservableObject {
         loadNotes()
     }
 
+    private func addNote(_ note: NoteItem) {
+        notes.insert(note, at: 0) // Insert at the beginning of the array
+    }
+
     func addTextNote(_ text: String) {
         let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .text(text))
-        notes.append(newNote)
+        addNote(newNote)
     }
 
     func addAudioNote(url: URL, duration: TimeInterval) {
         let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .audio(url, duration))
-        notes.append(newNote)
+        addNote(newNote)
     }
 
     func addPhotoNote(url: URL) {
         let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .photo(url))
-        notes.append(newNote)
+        addNote(newNote)
     }
 
     func addVideoNote(url: URL, duration: TimeInterval) {
         let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .video(url, duration))
-        notes.append(newNote)
+        addNote(newNote)
     }
 
     func deleteNotes(at offsets: IndexSet) {

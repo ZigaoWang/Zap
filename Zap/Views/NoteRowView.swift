@@ -13,9 +13,17 @@ struct NoteRowView: View {
 
     var body: some View {
         VStack(alignment: .leading) {
-            Text(note.timestamp, style: .date)
-                .font(.caption)
-                .foregroundColor(.secondary)
+            HStack {
+                Text(note.timestamp, style: .time)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                
+                Spacer()
+                
+                Text(formattedDuration)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
 
             switch note.type {
             case .text(let content):
@@ -37,6 +45,17 @@ struct NoteRowView: View {
         .padding(.vertical, 8)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
+    }
+    
+    private var formattedDuration: String {
+        switch note.type {
+        case .text:
+            return ""
+        case .audio(_, let duration), .video(_, let duration):
+            return String(format: "%.1f sec", duration)
+        case .photo:
+            return ""
         }
     }
 }
