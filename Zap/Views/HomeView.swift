@@ -9,6 +9,7 @@ import SwiftUI
 
 struct HomeView: View {
     @EnvironmentObject var viewModel: NotesViewModel
+    @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
@@ -52,6 +53,7 @@ struct HomeView: View {
                 TextNoteView()
             }
         }
+        .font(.system(size: appearanceManager.fontSizeValue))
     }
 
     func hapticFeedback() {
@@ -93,6 +95,8 @@ struct SpringButtonStyle: ButtonStyle {
 
 struct HomeView_Previews: PreviewProvider {
     static var previews: some View {
-        HomeView().environmentObject(NotesViewModel())
+        HomeView()
+            .environmentObject(NotesViewModel())
+            .environmentObject(AppearanceManager())
     }
 }

@@ -11,10 +11,14 @@ import AVFoundation
 struct VideoThumbnailView: View {
     let videoURL: URL
     @State private var thumbnail: UIImage?
+    @State private var errorMessage: String?
     
     var body: some View {
         Group {
-            if let thumbnail = thumbnail {
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+            } else if let thumbnail = thumbnail {
                 Image(uiImage: thumbnail)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
@@ -26,32 +30,23 @@ struct VideoThumbnailView: View {
                     .overlay(ProgressView())
             }
         }
-        .onAppear {
-            generateThumbnail()
-        }
+        .onAppear(perform: generateThumbnail)
     }
     
     private func generateThumbnail() {
-        DispatchQueue.global(qos: .background).async {
-            let asset = AVAsset(url: videoURL)
-            let imageGenerator = AVAssetImageGenerator(asset: asset)
-            imageGenerator.appliesPreferredTrackTransform = true
-            
-            do {
-                let cgImage = try imageGenerator.copyCGImage(at: .zero, actualTime: nil)
-                DispatchQueue.main.async {
-                    thumbnail = UIImage(cgImage: cgImage)
-                }
-            } catch {
-                print("Error generating thumbnail: \(error.localizedDescription)")
+        let asset = AVAsset(url: videoURL)
+        let imageGenerator = AVAssetImageGenerator(asset: asset)
+        imageGenerator.appliesPreferredTrackTransform = true
+        
+        do {
+            let cgImage = try imageGenerator.copyCGImage(at: .zero, actualTime: nil)
+            DispatchQueue.main.async {
+                thumbnail = UIImage(cgImage: cgImage)
+            }
+        } catch {
+            DispatchQueue.main.async {
+                errorMessage = "Error generating thumbnail: \(error.localizedDescription)"
             }
         }
-    }
-}
-
-
-struct VideoThumbnailView_Previews: PreviewProvider {
-    static var previews: some View {
-        VideoThumbnailView(videoURL: URL(fileURLWithPath: ""))
     }
 }

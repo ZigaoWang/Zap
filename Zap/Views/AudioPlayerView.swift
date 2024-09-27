@@ -15,33 +15,30 @@ struct AudioPlayerView: View {
     @State private var isPlaying = false
     @State private var progress: Double = 0
     @State private var player: AVAudioPlayer?
+    @State private var errorMessage: String?
     
     var body: some View {
         VStack {
-            HStack {
-                Button(action: {
-                    if isPlaying {
-                        player?.pause()
-                    } else {
-                        player?.play()
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+                    .foregroundColor(.red)
+            } else {
+                HStack {
+                    Button(action: togglePlayPause) {
+                        Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                            .font(.title)
                     }
-                    isPlaying.toggle()
-                }) {
-                    Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                        .font(.title)
-                }
-                
-                Slider(value: $progress, in: 0...duration) { editing in
-                    if !editing {
-                        player?.currentTime = progress
+                    
+                    Slider(value: $progress, in: 0...duration) { editing in
+                        if !editing {
+                            player?.currentTime = progress
+                        }
                     }
                 }
+                .padding()
             }
-            .padding()
         }
-        .onAppear {
-            setupPlayer()
-        }
+        .onAppear(perform: setupPlayer)
         .onDisappear {
             player?.stop()
         }
@@ -61,13 +58,16 @@ struct AudioPlayerView: View {
                 }
             }
         } catch {
-            print("Error setting up player: \(error.localizedDescription)")
+            errorMessage = "Error setting up player: \(error.localizedDescription)"
         }
     }
-}
-
-struct AudioPlayerView_Previews: PreviewProvider {
-    static var previews: some View {
-        AudioPlayerView(url: URL(fileURLWithPath: ""), duration: 60)
+    
+    private func togglePlayPause() {
+        if isPlaying {
+            player?.pause()
+        } else {
+            player?.play()
+        }
+        isPlaying.toggle()
     }
 }

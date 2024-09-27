@@ -24,6 +24,7 @@
 		A2AF7C172C9ED0B6002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AppearanceSettingsView.swift,
 				AudioNoteView.swift,
 				AudioPlayerInlineView.swift,
 				AudioPlayerView.swift,
@@ -35,6 +36,7 @@
 				ImagePicker.swift,
 				NoteRowView.swift,
 				SavedNotesView.swift,
+				SettingsView.swift,
 				TextNoteView.swift,
 				VideoThumbnailView.swift,
 			);
@@ -43,6 +45,7 @@
 		A2AF7C192C9ED10A002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AppearanceManager.swift,
 				NoteItem.swift,
 				NotesViewModel.swift,
 			);
