@@ -16,13 +16,14 @@ class NotesViewModel: ObservableObject {
     }
     @Published var isRecording = false
     private var audioRecorder: AVAudioRecorder?
+    private let notesFileName = "notes.json"
 
     init() {
         loadNotes()
     }
 
     private func addNote(_ note: NoteItem) {
-        notes.insert(note, at: 0) // Insert at the beginning of the array
+        notes.insert(note, at: 0)
     }
 
     func addTextNote(_ text: String) {
@@ -30,36 +31,53 @@ class NotesViewModel: ObservableObject {
         addNote(newNote)
     }
 
-    func addAudioNote(url: URL, duration: TimeInterval) {
-        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .audio(url, duration))
+    func addAudioNote(fileName: String, duration: TimeInterval) {
+        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .audio(fileName, duration))
         addNote(newNote)
     }
 
-    func addPhotoNote(url: URL) {
-        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .photo(url))
+    func addPhotoNote(fileName: String) {
+        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .photo(fileName))
         addNote(newNote)
     }
 
-    func addVideoNote(url: URL, duration: TimeInterval) {
-        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .video(url, duration))
+    func addVideoNote(fileName: String, duration: TimeInterval) {
+        let newNote = NoteItem(id: UUID(), timestamp: Date(), type: .video(fileName, duration))
         addNote(newNote)
     }
 
     func deleteNotes(at offsets: IndexSet) {
+        for index in offsets {
+            let note = notes[index]
+            switch note.type {
+            case .audio(let fileName, _), .photo(let fileName), .video(let fileName, _):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
+                try? FileManager.default.removeItem(at: url)
+            default:
+                break
+            }
+        }
         notes.remove(atOffsets: offsets)
     }
 
     private func saveNotes() {
-        if let encoded = try? JSONEncoder().encode(notes) {
-            UserDefaults.standard.set(encoded, forKey: "savedNotes")
+        do {
+            let data = try JSONEncoder().encode(notes)
+            let url = getDocumentsDirectory().appendingPathComponent(notesFileName)
+            try data.write(to: url)
+        } catch {
+            print("Failed to save notes: \(error)")
         }
     }
 
     private func loadNotes() {
-        if let savedNotes = UserDefaults.standard.data(forKey: "savedNotes") {
-            if let decodedNotes = try? JSONDecoder().decode([NoteItem].self, from: savedNotes) {
-                notes = decodedNotes
-            }
+        let url = getDocumentsDirectory().appendingPathComponent(notesFileName)
+        do {
+            let data = try Data(contentsOf: url)
+            notes = try JSONDecoder().decode([NoteItem].self, from: data)
+        } catch {
+            print("Failed to load notes: \(error)")
+            notes = []
         }
     }
 
@@ -69,8 +87,8 @@ class NotesViewModel: ObservableObject {
             try audioSession.setCategory(.playAndRecord, mode: .default)
             try audioSession.setActive(true)
 
-            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let audioFilename = documentsPath.appendingPathComponent("\(Date().timeIntervalSince1970).m4a")
+            let fileName = "\(UUID().uuidString).m4a"
+            let audioFilename = getDocumentsDirectory().appendingPathComponent(fileName)
 
             let settings = [
                 AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -84,18 +102,22 @@ class NotesViewModel: ObservableObject {
             isRecording = true
 
         } catch {
-            print("Could not start recording")
+            print("Could not start recording: \(error.localizedDescription)")
         }
     }
 
     func stopRecording() {
         audioRecorder?.stop()
         if let url = audioRecorder?.url {
-            let asset = AVAsset(url: url)
-            let duration = asset.duration.seconds
-            addAudioNote(url: url, duration: duration)
+            let duration = AVAsset(url: url).duration.seconds
+            let fileName = url.lastPathComponent
+            addAudioNote(fileName: fileName, duration: duration)
         }
         audioRecorder = nil
         isRecording = false
+    }
+
+    private func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }

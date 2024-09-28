@@ -17,9 +17,11 @@ struct FullScreenMediaView: View {
             Color.black.edgesIgnoringSafeArea(.all)
 
             switch note.type {
-            case .photo(let url):
+            case .photo(let fileName):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
                 PhotoFullScreenView(url: url)
-            case .video(let url, _):
+            case .video(let fileName, _):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
                 VideoFullScreenView(url: url)
             default:
                 EmptyView()
@@ -38,6 +40,10 @@ struct FullScreenMediaView: View {
                 Spacer()
             }
         }
+    }
+
+    private func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }
 
@@ -64,11 +70,6 @@ struct VideoFullScreenView: View {
 
     var body: some View {
         VideoPlayer(player: AVPlayer(url: url))
-    }
-}
-
-struct FullScreenMediaView_Previews: PreviewProvider {
-    static var previews: some View {
-        FullScreenMediaView(note: NoteItem(id: UUID(), timestamp: Date(), type: .photo(URL(fileURLWithPath: ""))), isPresented: .constant(true))
+            .edgesIgnoringSafeArea(.all)
     }
 }

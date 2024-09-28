@@ -17,9 +17,7 @@ struct NoteRowView: View {
                 Text(note.timestamp, style: .time)
                     .font(.caption)
                     .foregroundColor(.secondary)
-                
                 Spacer()
-                
                 Text(formattedDuration)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -29,15 +27,18 @@ struct NoteRowView: View {
             case .text(let content):
                 Text(content)
                     .lineLimit(3)
-            case .audio(let url, let duration):
+            case .audio(let fileName, let duration):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
                 AudioPlayerView(url: url, duration: duration)
-            case .photo(let url):
+            case .photo(let fileName):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
                 Image(uiImage: UIImage(contentsOfFile: url.path) ?? UIImage())
                     .resizable()
                     .scaledToFit()
                     .frame(height: 100)
                     .onTapGesture { showFullScreen = true }
-            case .video(let url, _):
+            case .video(let fileName, _):
+                let url = getDocumentsDirectory().appendingPathComponent(fileName)
                 VideoThumbnailView(videoURL: url)
                     .onTapGesture { showFullScreen = true }
             }
@@ -47,7 +48,7 @@ struct NoteRowView: View {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
         }
     }
-    
+
     private var formattedDuration: String {
         switch note.type {
         case .text:
@@ -58,10 +59,8 @@ struct NoteRowView: View {
             return ""
         }
     }
-}
 
-struct NoteRowView_Previews: PreviewProvider {
-    static var previews: some View {
-        NoteRowView(note: NoteItem(id: UUID(), timestamp: Date(), type: .text("Sample text note")))
+    private func getDocumentsDirectory() -> URL {
+        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }

@@ -15,12 +15,12 @@ struct NoteItem: Identifiable, Codable {
 
 enum NoteType: Codable {
     case text(String)
-    case audio(URL, TimeInterval)
-    case photo(URL)
-    case video(URL, TimeInterval)
+    case audio(String, TimeInterval)
+    case photo(String)
+    case video(String, TimeInterval)
 
     private enum CodingKeys: String, CodingKey {
-        case type, content, url, duration
+        case type, content, fileName, duration
     }
 
     enum NoteTypeCoding: String, Codable {
@@ -35,16 +35,16 @@ enum NoteType: Codable {
             let content = try container.decode(String.self, forKey: .content)
             self = .text(content)
         case .audio:
-            let url = try container.decode(URL.self, forKey: .url)
+            let fileName = try container.decode(String.self, forKey: .fileName)
             let duration = try container.decode(TimeInterval.self, forKey: .duration)
-            self = .audio(url, duration)
+            self = .audio(fileName, duration)
         case .photo:
-            let url = try container.decode(URL.self, forKey: .url)
-            self = .photo(url)
+            let fileName = try container.decode(String.self, forKey: .fileName)
+            self = .photo(fileName)
         case .video:
-            let url = try container.decode(URL.self, forKey: .url)
+            let fileName = try container.decode(String.self, forKey: .fileName)
             let duration = try container.decode(TimeInterval.self, forKey: .duration)
-            self = .video(url, duration)
+            self = .video(fileName, duration)
         }
     }
 
@@ -54,16 +54,16 @@ enum NoteType: Codable {
         case .text(let content):
             try container.encode(NoteTypeCoding.text, forKey: .type)
             try container.encode(content, forKey: .content)
-        case .audio(let url, let duration):
+        case .audio(let fileName, let duration):
             try container.encode(NoteTypeCoding.audio, forKey: .type)
-            try container.encode(url, forKey: .url)
+            try container.encode(fileName, forKey: .fileName)
             try container.encode(duration, forKey: .duration)
-        case .photo(let url):
+        case .photo(let fileName):
             try container.encode(NoteTypeCoding.photo, forKey: .type)
-            try container.encode(url, forKey: .url)
-        case .video(let url, let duration):
+            try container.encode(fileName, forKey: .fileName)
+        case .video(let fileName, let duration):
             try container.encode(NoteTypeCoding.video, forKey: .type)
-            try container.encode(url, forKey: .url)
+            try container.encode(fileName, forKey: .fileName)
             try container.encode(duration, forKey: .duration)
         }
     }
