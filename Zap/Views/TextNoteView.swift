@@ -16,7 +16,7 @@ struct TextNoteView: View {
         NavigationView {
             TextEditor(text: $text)
                 .padding()
-                .navigationTitle("New Text Note")
+                .navigationTitle("Zap Text!")
                 .navigationBarItems(
                     leading: Button("Cancel") {
                         presentationMode.wrappedValue.dismiss()
