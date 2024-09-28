@@ -14,7 +14,9 @@ struct SettingsView: View {
                 NavigationLink(destination: AppearanceSettingsView()) {
                     SettingsRowView(title: "Appearance", icon: "paintbrush.fill")
                 }
-                // Add more NavigationLinks for other settings categories here
+                NavigationLink(destination: AboutHelpView()) {
+                                    SettingsRowView(title: "About & Help", icon: "info.circle.fill")
+                }
             }
             .navigationTitle("Settings")
         }
