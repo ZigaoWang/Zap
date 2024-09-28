@@ -2,11 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>NSCameraUsageDescription</key>
-    <string>需要访问相机以拍摄照片和视频</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>需要访问麦克风以录制音频</string>
+    <string>Zap needs access to your microphone to record audio notes.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>需要访问照片库以选择照片</string>
+    <string>Zap needs access to your photo library to save photos and videos.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Zap needs access to your camera to take new photos and videos.</string>
+
 </dict>
 </plist>
