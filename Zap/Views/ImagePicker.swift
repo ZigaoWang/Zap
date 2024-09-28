@@ -39,9 +39,8 @@ struct ImagePicker: UIViewControllerRepresentable {
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
                 let imageURL = saveImageToDocuments(image)
-                parent.viewModel.addPhotoNote(url: imageURL)
-                
-                // Only save to album if the source is camera
+                parent.viewModel.addPhotoNote(fileName: imageURL.lastPathComponent)
+
                 if parent.sourceType == .camera {
                     saveToAlbum(image: image)
                 }
@@ -49,14 +48,13 @@ struct ImagePicker: UIViewControllerRepresentable {
                 let savedVideoURL = saveVideoToDocuments(videoURL)
                 let asset = AVAsset(url: savedVideoURL)
                 let duration = asset.duration.seconds
-                parent.viewModel.addVideoNote(url: savedVideoURL, duration: duration)
-                
-                // Only save to album if the source is camera
+                parent.viewModel.addVideoNote(fileName: savedVideoURL.lastPathComponent, duration: duration)
+
                 if parent.sourceType == .camera {
                     saveToAlbum(videoURL: videoURL)
                 }
             }
-            
+
             parent.presentationMode.wrappedValue.dismiss()
         }
 
@@ -85,7 +83,7 @@ struct ImagePicker: UIViewControllerRepresentable {
         private func saveToAlbum(image: UIImage? = nil, videoURL: URL? = nil) {
             PHPhotoLibrary.requestAuthorization { status in
                 guard status == .authorized else { return }
-                
+
                 PHPhotoLibrary.shared().performChanges {
                     if let image = image {
                         PHAssetChangeRequest.creationRequestForAsset(from: image)
