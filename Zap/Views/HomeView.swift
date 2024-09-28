@@ -45,9 +45,11 @@ struct HomeView: View {
             .navigationTitle("Zap")
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(sourceType: .photoLibrary)
+                    .environmentObject(viewModel)
             }
             .sheet(isPresented: $showingCameraPicker) {
                 ImagePicker(sourceType: .camera)
+                    .environmentObject(viewModel)
             }
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()

@@ -24,6 +24,7 @@
 		A2AF7C172C9ED0B6002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AboutHelpView.swift,
 				AppearanceSettingsView.swift,
 				AudioNoteView.swift,
 				AudioPlayerInlineView.swift,
@@ -35,8 +36,10 @@
 				ImageFullscreenView.swift,
 				ImagePicker.swift,
 				NoteRowView.swift,
+				PrivacyPolicyView.swift,
 				SavedNotesView.swift,
 				SettingsView.swift,
+				TermsOfServiceView.swift,
 				TextNoteView.swift,
 				VideoThumbnailView.swift,
 			);
