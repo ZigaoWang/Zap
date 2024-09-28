@@ -35,6 +35,7 @@
 				ImageCache.swift,
 				ImageFullscreenView.swift,
 				ImagePicker.swift,
+				MediaQualitySettingsView.swift,
 				NoteRowView.swift,
 				PrivacyPolicyView.swift,
 				SavedNotesView.swift,
@@ -49,6 +50,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				AppearanceManager.swift,
+				MediaQualitySettings.swift,
 				NoteItem.swift,
 				NotesViewModel.swift,
 			);

@@ -8,8 +8,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject var viewModel = NotesViewModel()
-    @StateObject var appearanceManager = AppearanceManager()
+    @EnvironmentObject var viewModel: NotesViewModel
+    @EnvironmentObject var appearanceManager: AppearanceManager
+    @EnvironmentObject var mediaQualitySettings: MediaQualitySettings
 
     var body: some View {
         TabView {
@@ -31,8 +32,6 @@ struct ContentView: View {
                     Text("Settings")
                 }
         }
-        .environmentObject(viewModel)
-        .environmentObject(appearanceManager)
         .environment(\.customFontSize, appearanceManager.fontSizeValue)
         .preferredColorScheme(appearanceManager.colorScheme)
         .accentColor(appearanceManager.accentColor)

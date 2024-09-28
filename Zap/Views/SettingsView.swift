@@ -14,8 +14,11 @@ struct SettingsView: View {
                 NavigationLink(destination: AppearanceSettingsView()) {
                     SettingsRowView(title: "Appearance", icon: "paintbrush.fill")
                 }
+                NavigationLink(destination: MediaQualitySettingsView()) {
+                    SettingsRowView(title: "Media Quality", icon: "camera.fill")
+                }
                 NavigationLink(destination: AboutHelpView()) {
-                                    SettingsRowView(title: "About & Help", icon: "info.circle.fill")
+                    SettingsRowView(title: "About & Help", icon: "info.circle.fill")
                 }
             }
             .navigationTitle("Settings")
@@ -32,11 +35,5 @@ struct SettingsRowView: View {
             Image(systemName: icon)
             Text(title)
         }
-    }
-}
-
-struct SettingsView_Previews: PreviewProvider {
-    static var previews: some View {
-        SettingsView()
     }
 }
