@@ -6,7 +6,6 @@
 //
 
 import SwiftUI
-import AVFoundation
 
 struct HomeView: View {
     @EnvironmentObject var viewModel: NotesViewModel
@@ -14,11 +13,10 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
-    @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 20) {
                 List {
                     ForEach(viewModel.notes) { note in
                         NoteRowView(note: note)
@@ -32,7 +30,7 @@ struct HomeView: View {
                         showingTextNote = true
                     }
 
-                    ZapButton(title: viewModel.isRecording ? "Stop" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
+                    ZapButton(title: viewModel.isRecording ? "Stop Recording" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
                         hapticFeedback()
                         if viewModel.isRecording {
                             viewModel.stopRecording()
@@ -41,28 +39,29 @@ struct HomeView: View {
                         }
                     }
 
-                    ZapButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
+                    ZapButton(title: "Choose from Album", icon: "photo.on.rectangle", color: .orange) {
                         hapticFeedback()
-                        imagePickerSourceType = .photoLibrary
                         showingImagePicker = true
                     }
 
-                    ZapButton(title: "Camera", icon: "camera", color: .purple) {
+                    ZapButton(title: "Zap Photo/Video", icon: "camera", color: .purple) {
                         hapticFeedback()
-                        imagePickerSourceType = .camera
-                        showingImagePicker = true
+                        showingCameraPicker = true
                     }
                 }
                 .padding()
             }
             .navigationTitle("Zap")
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(sourceType: imagePickerSourceType)
+                ImagePicker(sourceType: .photoLibrary)
+                    .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $showingCameraPicker) {
+                ImagePicker(sourceType: .camera)
                     .environmentObject(viewModel)
             }
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()
-                    .environmentObject(viewModel)
             }
         }
         .font(.system(size: appearanceManager.fontSizeValue))

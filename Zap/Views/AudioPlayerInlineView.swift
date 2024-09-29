@@ -47,25 +47,22 @@ struct AudioPlayerInlineView: View {
         }
     }
 
-    // 设置音频播放器
     func setupAudioPlayer() {
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                // 配置音频会话
                 try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
                 try AVAudioSession.sharedInstance().setActive(true)
 
                 audioPlayer = try AVAudioPlayer(contentsOf: url)
                 duration = audioPlayer?.duration ?? 0
-                audioPlayer?.delegate = AudioPlayerDelegate(isPlaying: $isPlaying, stopTimer: stopTimer)
+                audioPlayer?.delegate = AudioPlayerDelegate(isPlaying: $isPlaying)
                 audioPlayer?.prepareToPlay()
             } catch {
-                print("无法加载音频文件: \(error.localizedDescription)")
+                print("Unable to load audio file: \(error.localizedDescription)")
             }
         }
     }
 
-    // 切换播放/停止
     func togglePlayPause() {
         guard let player = audioPlayer else { return }
         if isPlaying {
@@ -79,7 +76,6 @@ struct AudioPlayerInlineView: View {
         }
     }
 
-    // 开始计时器
     func startTimer() {
         playbackTime = audioPlayer?.currentTime ?? 0
         timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
@@ -93,13 +89,11 @@ struct AudioPlayerInlineView: View {
         }
     }
 
-    // 停止计时器
     func stopTimer() {
         timer?.invalidate()
         timer = nil
     }
 
-    // 格式化时间显示
     func formatTime(_ time: Double) -> String {
         let mins = Int(time) / 60
         let secs = Int(time) % 60
@@ -107,25 +101,14 @@ struct AudioPlayerInlineView: View {
     }
 }
 
-// 重命名后的代理类，避免与系统协议冲突
 class AudioPlayerDelegate: NSObject, AVAudioPlayerDelegate {
     @Binding var isPlaying: Bool
-    var stopTimer: () -> Void
 
-    init(isPlaying: Binding<Bool>, stopTimer: @escaping () -> Void) {
+    init(isPlaying: Binding<Bool>) {
         self._isPlaying = isPlaying
-        self.stopTimer = stopTimer
     }
 
     func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
         isPlaying = false
-        stopTimer()
-    }
-}
-
-struct AudioPlayerInlineView_Previews: PreviewProvider {
-    static var previews: some View {
-        AudioPlayerInlineView(url: Bundle.main.url(forResource: "sample", withExtension: "m4a")!)
-            .environmentObject(NotesViewModel())
     }
 }

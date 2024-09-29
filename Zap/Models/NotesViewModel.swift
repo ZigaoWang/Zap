@@ -120,4 +120,9 @@ class NotesViewModel: ObservableObject {
     private func getDocumentsDirectory() -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
+    func toggleNoteCompletion(_ note: NoteItem) {
+            if let index = notes.firstIndex(where: { $0.id == note.id }) {
+                notes[index].isCompleted.toggle()
+            }
+    }
 }

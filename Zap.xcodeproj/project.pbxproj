@@ -51,6 +51,7 @@
 				AppearanceManager.swift,
 				NoteItem.swift,
 				NotesViewModel.swift,
+				SharedComponents.swift,
 			);
 			target = A293D0AC2C9B0941005F0A3C /* Zap */;
 		};

@@ -11,6 +11,14 @@ struct NoteItem: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
     let type: NoteType
+    var isCompleted: Bool
+
+    init(id: UUID = UUID(), timestamp: Date = Date(), type: NoteType, isCompleted: Bool = false) {
+        self.id = id
+        self.timestamp = timestamp
+        self.type = type
+        self.isCompleted = isCompleted
+    }
 }
 
 enum NoteType: Codable {
