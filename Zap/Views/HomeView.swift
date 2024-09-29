@@ -13,7 +13,6 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
-    @State private var showingSettings = false
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
@@ -27,38 +26,43 @@ struct HomeView: View {
                 }
 
                 HStack(spacing: 10) {
-                    ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
-                        hapticFeedback()
-                        showingTextNote = true
-                    }
+                    VStack(spacing: 10) {
+                        ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
+                            hapticFeedback()
+                            showingTextNote = true
+                        }
 
-                    ZapButton(title: viewModel.isRecording ? "Stop" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
-                        hapticFeedback()
-                        if viewModel.isRecording {
-                            viewModel.stopRecording()
-                        } else {
-                            viewModel.startRecording()
+                        ZapButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
+                            hapticFeedback()
+                            imagePickerSourceType = .photoLibrary
+                            showingImagePicker = true
                         }
                     }
 
-                    ZapButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
-                        hapticFeedback()
-                        imagePickerSourceType = .photoLibrary
-                        showingImagePicker = true
-                    }
+                    VStack(spacing: 10) {
+                        ZapButton(title: viewModel.isRecording ? "Stop" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
+                            hapticFeedback()
+                            if viewModel.isRecording {
+                                viewModel.stopRecording()
+                            } else {
+                                viewModel.startRecording()
+                            }
+                        }
 
-                    ZapButton(title: "Camera", icon: "camera", color: .purple) {
-                        hapticFeedback()
-                        imagePickerSourceType = .camera
-                        showingImagePicker = true
+                        ZapButton(title: "Camera", icon: "camera", color: .purple) {
+                            hapticFeedback()
+                            imagePickerSourceType = .camera
+                            showingImagePicker = true
+                        }
                     }
                 }
+                .frame(height: 150)  // Set a fixed height for the button container
                 .padding()
             }
             .navigationTitle("Zap")
             .navigationBarItems(trailing:
                 Button(action: {
-                    showingSettings = true
+                    // Add action for settings button
                 }) {
                     Image(systemName: "gear")
                         .foregroundColor(.primary)
@@ -71,10 +75,6 @@ struct HomeView: View {
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()
                     .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-                    .environmentObject(appearanceManager)
             }
         }
         .font(.system(size: appearanceManager.fontSizeValue))
@@ -100,7 +100,7 @@ struct ZapButton: View {
                 Text(title)
                     .font(.caption)
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(.vertical, 10)
             .background(color)
             .foregroundColor(.white)
@@ -109,4 +109,3 @@ struct ZapButton: View {
         .buttonStyle(SpringButtonStyle())
     }
 }
-
