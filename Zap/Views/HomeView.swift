@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
+    @State private var showingSettings = false
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
@@ -55,6 +56,14 @@ struct HomeView: View {
                 .padding()
             }
             .navigationTitle("Zap")
+            .navigationBarItems(trailing:
+                Button(action: {
+                    showingSettings = true
+                }) {
+                    Image(systemName: "gear")
+                        .foregroundColor(.primary)
+                }
+            )
             .sheet(isPresented: $showingImagePicker) {
                 ImagePicker(sourceType: imagePickerSourceType)
                     .environmentObject(viewModel)
@@ -62,6 +71,10 @@ struct HomeView: View {
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()
                     .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+                    .environmentObject(appearanceManager)
             }
         }
         .font(.system(size: appearanceManager.fontSizeValue))
@@ -96,3 +109,4 @@ struct ZapButton: View {
         .buttonStyle(SpringButtonStyle())
     }
 }
+
