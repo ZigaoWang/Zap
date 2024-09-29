@@ -52,6 +52,9 @@ struct AudioPlayerInlineView: View {
 
     private func setupAudioPlayer() {
         do {
+            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+            try AVAudioSession.sharedInstance().setActive(true)
+            
             audioPlayer = try AVAudioPlayer(contentsOf: url)
             duration = audioPlayer?.duration ?? 0
             audioPlayer?.prepareToPlay()
