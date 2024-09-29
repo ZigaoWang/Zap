@@ -12,29 +12,17 @@ struct ContentView: View {
     @StateObject var appearanceManager = AppearanceManager()
 
     var body: some View {
-        TabView {
-            HomeView()
-                .tabItem {
-                    Image(systemName: "house.fill")
-                    Text("Home")
+        HomeView()
+            .environmentObject(viewModel)
+            .environmentObject(appearanceManager)
+            .environment(\.customFontSize, appearanceManager.fontSizeValue)
+            .preferredColorScheme(appearanceManager.colorScheme)
+            .accentColor(appearanceManager.accentColor)
+            .onAppear {
+                // Ensure accent color is set correctly
+                if let color = Color(hex: appearanceManager.accentColorString) {
+                    appearanceManager.setAccentColor(color)
                 }
-            
-            SavedNotesView()
-                .tabItem {
-                    Image(systemName: "folder.fill")
-                    Text("Saved")
-                }
-            
-            SettingsView()
-                .tabItem {
-                    Image(systemName: "gear")
-                    Text("Settings")
-                }
-        }
-        .environmentObject(viewModel)
-        .environmentObject(appearanceManager)
-        .environment(\.customFontSize, appearanceManager.fontSizeValue)
-        .preferredColorScheme(appearanceManager.colorScheme)
-        .accentColor(appearanceManager.accentColor)
+            }
     }
 }

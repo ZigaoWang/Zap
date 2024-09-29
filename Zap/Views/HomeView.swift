@@ -13,46 +13,68 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
+    @State private var showingSettings = false
+    @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
-                ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
-                    hapticFeedback()
-                    showingTextNote = true
+            VStack {
+                List {
+                    ForEach(viewModel.notes) { note in
+                        NoteRowView(note: note)
+                    }
+                    .onDelete(perform: viewModel.deleteNotes)
                 }
 
-                ZapButton(title: viewModel.isRecording ? "Stop Recording" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
-                    hapticFeedback()
-                    if viewModel.isRecording {
-                        viewModel.stopRecording()
-                    } else {
-                        viewModel.startRecording()
+                HStack(spacing: 10) {
+                    ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
+                        hapticFeedback()
+                        showingTextNote = true
+                    }
+
+                    ZapButton(title: viewModel.isRecording ? "Stop" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
+                        hapticFeedback()
+                        if viewModel.isRecording {
+                            viewModel.stopRecording()
+                        } else {
+                            viewModel.startRecording()
+                        }
+                    }
+
+                    ZapButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
+                        hapticFeedback()
+                        imagePickerSourceType = .photoLibrary
+                        showingImagePicker = true
+                    }
+
+                    ZapButton(title: "Camera", icon: "camera", color: .purple) {
+                        hapticFeedback()
+                        imagePickerSourceType = .camera
+                        showingImagePicker = true
                     }
                 }
-
-                ZapButton(title: "Choose from Album", icon: "photo.on.rectangle", color: .orange) {
-                    hapticFeedback()
-                    showingImagePicker = true
-                }
-
-                ZapButton(title: "Zap Photo/Video", icon: "camera", color: .purple) {
-                    hapticFeedback()
-                    showingCameraPicker = true
-                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Zap")
+            .navigationBarItems(trailing:
+                Button(action: {
+                    showingSettings = true
+                }) {
+                    Image(systemName: "gear")
+                        .foregroundColor(.primary)
+                }
+            )
             .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(sourceType: .photoLibrary)
-                    .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $showingCameraPicker) {
-                ImagePicker(sourceType: .camera)
+                ImagePicker(sourceType: imagePickerSourceType)
                     .environmentObject(viewModel)
             }
             .sheet(isPresented: $showingTextNote) {
                 TextNoteView()
+                    .environmentObject(viewModel)
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+                    .environmentObject(appearanceManager)
             }
         }
         .font(.system(size: appearanceManager.fontSizeValue))
@@ -72,13 +94,14 @@ struct ZapButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack {
+            VStack {
                 Image(systemName: icon)
                     .font(.system(size: 24))
                 Text(title)
-                    .font(.headline)
+                    .font(.caption)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
             .background(color)
             .foregroundColor(.white)
             .cornerRadius(10)
@@ -87,18 +110,3 @@ struct ZapButton: View {
     }
 }
 
-struct SpringButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
-            .animation(.spring(), value: configuration.isPressed)
-    }
-}
-
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-            .environmentObject(NotesViewModel())
-            .environmentObject(AppearanceManager())
-    }
-}
