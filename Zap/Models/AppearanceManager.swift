@@ -9,17 +9,9 @@ import SwiftUI
 
 class AppearanceManager: ObservableObject {
     @AppStorage("appTheme") var appTheme: AppTheme = .system
-    @AppStorage("accentColorString") var accentColorString: String = "blue" {
-        didSet {
-            accentColor = Color(hex: accentColorString) ?? .blue
-        }
-    }
+    @AppStorage("accentColorString") var accentColorString: String = "blue"
     @Published var accentColor: Color = .blue
-    @AppStorage("fontSize") var fontSize: FontSize = .medium {
-        didSet {
-            fontSizeValue = getFontSize(fontSize)
-        }
-    }
+    @AppStorage("fontSize") var fontSize: FontSize = .medium
     @AppStorage("listViewStyle") var listViewStyle: ListViewStyle = .standard
     
     @Published var fontSizeValue: CGFloat = 16 // Default to medium
@@ -55,6 +47,11 @@ class AppearanceManager: ObservableObject {
         case .medium: return 16
         case .large: return 18
         }
+    }
+    
+    func setAccentColor(_ color: Color) {
+        self.accentColor = color
+        self.accentColorString = color.toHex() ?? "blue"
     }
 }
 

@@ -11,6 +11,7 @@ import AVFoundation
 
 struct NoteRowView: View {
     @EnvironmentObject var viewModel: NotesViewModel
+    @EnvironmentObject var appearanceManager: AppearanceManager
     @Environment(\.colorScheme) var colorScheme
     let note: NoteItem
     @State private var showFullScreen = false
@@ -26,7 +27,7 @@ struct NoteRowView: View {
             }) {
                 Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 30))
-                    .foregroundColor(note.isCompleted ? .green : .gray)
+                    .foregroundColor(note.isCompleted ? appearanceManager.accentColor : .gray)
             }
             .buttonStyle(SpringButtonStyle())
             
