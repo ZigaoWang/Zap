@@ -24,8 +24,11 @@ struct HomeView: View {
                         NoteRowView(note: note)
                             .swipeActions(edge: .trailing) {
                                 Button(role: .destructive) {
-                                    if let index = viewModel.notes.firstIndex(where: { $0.id == note.id }) {
-                                        viewModel.deleteNotes(at: IndexSet(integer: index))
+                                    withAnimation {
+                                        if let index = viewModel.notes.firstIndex(where: { $0.id == note.id }) {
+                                            viewModel.deleteNotes(at: IndexSet(integer: index))
+                                            HapticManager.shared.impact(.rigid)
+                                        }
                                     }
                                 } label: {
                                     Label("Delete", systemImage: "trash")
@@ -33,7 +36,10 @@ struct HomeView: View {
                             }
                             .swipeActions(edge: .leading) {
                                 Button {
-                                    viewModel.toggleNoteCompletion(note)
+                                    withAnimation {
+                                        viewModel.toggleNoteCompletion(note)
+                                        HapticManager.shared.impact(.light)
+                                    }
                                 } label: {
                                     Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
                                 }
@@ -43,74 +49,33 @@ struct HomeView: View {
                 }
 
                 HStack(spacing: 10) {
-                    Button(action: {
-                        hapticFeedback()
+                    mainActionButton(title: "Zap Text", icon: "text.justify", color: .blue) {
+                        HapticManager.shared.impact(.medium)
                         showingTextNote = true
-                    }) {
-                        VStack {
-                            Image(systemName: "text.justify")
-                                .font(.system(size: 24))
-                            Text("Zap Text")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                     }
 
-                    Button(action: {
-                        hapticFeedback()
+                    mainActionButton(title: viewModel.isRecording ? "Stop" : "Zap Audio",
+                                     icon: viewModel.isRecording ? "stop.circle" : "mic",
+                                     color: viewModel.isRecording ? .red : .green) {
                         if viewModel.isRecording {
                             viewModel.stopRecording()
+                            HapticManager.shared.notification(.success)
                         } else {
                             viewModel.startRecording()
+                            HapticManager.shared.impact(.heavy)
                         }
-                    }) {
-                        VStack {
-                            Image(systemName: viewModel.isRecording ? "stop.circle" : "mic")
-                                .font(.system(size: 24))
-                            Text(viewModel.isRecording ? "Stop" : "Zap Audio")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(viewModel.isRecording ? Color.red : Color.green)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                     }
 
-                    Button(action: {
-                        hapticFeedback()
+                    mainActionButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
+                        HapticManager.shared.impact(.medium)
                         imagePickerSourceType = .photoLibrary
                         showingImagePicker = true
-                    }) {
-                        VStack {
-                            Image(systemName: "photo.on.rectangle")
-                                .font(.system(size: 24))
-                            Text("Album")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.orange)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                     }
 
-                    Button(action: {
-                        hapticFeedback()
+                    mainActionButton(title: "Camera", icon: "camera", color: .purple) {
+                        HapticManager.shared.impact(.medium)
                         imagePickerSourceType = .camera
                         showingImagePicker = true
-                    }) {
-                        VStack {
-                            Image(systemName: "camera")
-                                .font(.system(size: 24))
-                            Text("Camera")
-                                .font(.caption)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.purple)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
                     }
                 }
                 .frame(height: 70)
@@ -120,6 +85,7 @@ struct HomeView: View {
             .navigationTitle("Zap")
             .navigationBarItems(trailing:
                 Button(action: {
+                    HapticManager.shared.impact(.light)
                     showingSettings = true
                 }) {
                     Image(systemName: "gear")
@@ -143,16 +109,35 @@ struct HomeView: View {
         .font(.system(size: appearanceManager.fontSizeValue))
     }
 
-    func hapticFeedback() {
-        let impact = UIImpactFeedbackGenerator(style: .medium)
-        impact.impactOccurred()
+    private func mainActionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            VStack {
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                Text(title)
+                    .font(.caption)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(color)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+        }
     }
 }
 
-struct HomeView_Previews: PreviewProvider {
-    static var previews: some View {
-        HomeView()
-            .environmentObject(NotesViewModel())
-            .environmentObject(AppearanceManager())
+// HapticManager to centralize haptic feedback
+class HapticManager {
+    static let shared = HapticManager()
+    
+    private init() {}
+    
+    func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
+        let generator = UIImpactFeedbackGenerator(style: style)
+        generator.impactOccurred()
+    }
+    
+    func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(type)
     }
 }
