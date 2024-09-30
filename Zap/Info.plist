@@ -8,6 +8,7 @@
     <string>Zap needs access to your photo library to save photos and videos.</string>
     <key>NSCameraUsageDescription</key>
     <string>Zap needs access to your camera to take new photos and videos.</string>
-
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Zap needs access to speech recognition to transcribe your audio notes.</string>
 </dict>
 </plist>

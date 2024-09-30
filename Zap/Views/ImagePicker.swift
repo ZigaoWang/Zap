@@ -6,8 +6,7 @@
 //
 
 import SwiftUI
-import UIKit
-import Photos
+import AVFoundation
 
 struct ImagePicker: UIViewControllerRepresentable {
     @Environment(\.presentationMode) var presentationMode
@@ -38,66 +37,35 @@ struct ImagePicker: UIViewControllerRepresentable {
 
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
             if let image = info[.originalImage] as? UIImage {
-                let imageURL = saveImageToDocuments(image)
-                parent.viewModel.addPhotoNote(fileName: imageURL.lastPathComponent)
-
-                if parent.sourceType == .camera {
-                    saveToAlbum(image: image)
-                }
+                let fileName = saveImageToDocuments(image)
+                parent.viewModel.addPhotoNote(fileName: fileName)
             } else if let videoURL = info[.mediaURL] as? URL {
-                let savedVideoURL = saveVideoToDocuments(videoURL)
-                let asset = AVAsset(url: savedVideoURL)
+                let fileName = saveVideoToDocuments(videoURL)
+                let asset = AVAsset(url: videoURL)
                 let duration = asset.duration.seconds
-                parent.viewModel.addVideoNote(fileName: savedVideoURL.lastPathComponent, duration: duration)
-
-                if parent.sourceType == .camera {
-                    saveToAlbum(videoURL: videoURL)
-                }
+                parent.viewModel.addVideoNote(fileName: fileName, duration: duration)
             }
-
             parent.presentationMode.wrappedValue.dismiss()
         }
 
-        private func saveImageToDocuments(_ image: UIImage) -> URL {
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        private func saveImageToDocuments(_ image: UIImage) -> String {
             let fileName = UUID().uuidString + ".jpg"
-            let fileURL = documentsDirectory.appendingPathComponent(fileName)
-            if let data = image.jpegData(compressionQuality: 1.0) {
+            let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
+            if let data = image.jpegData(compressionQuality: 0.8) {
                 try? data.write(to: fileURL)
             }
-            return fileURL
+            return fileName
         }
 
-        private func saveVideoToDocuments(_ videoURL: URL) -> URL {
-            let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        private func saveVideoToDocuments(_ videoURL: URL) -> String {
             let fileName = UUID().uuidString + ".mov"
-            let destinationURL = documentsDirectory.appendingPathComponent(fileName)
-            do {
-                try FileManager.default.copyItem(at: videoURL, to: destinationURL)
-            } catch {
-                print("Error saving video: \(error)")
-            }
-            return destinationURL
+            let destinationURL = getDocumentsDirectory().appendingPathComponent(fileName)
+            try? FileManager.default.copyItem(at: videoURL, to: destinationURL)
+            return fileName
         }
 
-        private func saveToAlbum(image: UIImage? = nil, videoURL: URL? = nil) {
-            PHPhotoLibrary.requestAuthorization { status in
-                guard status == .authorized else { return }
-
-                PHPhotoLibrary.shared().performChanges {
-                    if let image = image {
-                        PHAssetChangeRequest.creationRequestForAsset(from: image)
-                    } else if let videoURL = videoURL {
-                        PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: videoURL)
-                    }
-                } completionHandler: { success, error in
-                    if success {
-                        print("Saved to album successfully")
-                    } else if let error = error {
-                        print("Error saving to album: \(error)")
-                    }
-                }
-            }
+        private func getDocumentsDirectory() -> URL {
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         }
     }
 }

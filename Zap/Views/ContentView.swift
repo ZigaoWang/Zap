@@ -18,11 +18,5 @@ struct ContentView: View {
             .environment(\.customFontSize, appearanceManager.fontSizeValue)
             .preferredColorScheme(appearanceManager.colorScheme)
             .accentColor(appearanceManager.accentColor)
-            .onAppear {
-                // Ensure accent color is set correctly
-                if let color = Color(hex: appearanceManager.accentColorString) {
-                    appearanceManager.setAccentColor(color)
-                }
-            }
     }
 }

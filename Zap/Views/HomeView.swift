@@ -78,6 +78,9 @@ struct HomeView: View {
             }
         }
         .font(.system(size: appearanceManager.fontSizeValue))
+        .onChange(of: viewModel.notes.count) { _ in
+            print("Notes updated, count: \(viewModel.notes.count)")
+        }
     }
 
     func hapticFeedback() {

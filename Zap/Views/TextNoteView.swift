@@ -10,28 +10,22 @@ import SwiftUI
 struct TextNoteView: View {
     @Environment(\.presentationMode) var presentationMode
     @EnvironmentObject var viewModel: NotesViewModel
-    @State private var text: String = ""
+    @State private var noteText = ""
 
     var body: some View {
         NavigationView {
-            TextEditor(text: $text)
+            TextEditor(text: $noteText)
                 .padding()
-                .navigationTitle("Zap Text!")
+                .navigationBarTitle("New Text Note", displayMode: .inline)
                 .navigationBarItems(
                     leading: Button("Cancel") {
                         presentationMode.wrappedValue.dismiss()
                     },
                     trailing: Button("Save") {
-                        viewModel.addTextNote(text)
+                        viewModel.addTextNote(noteText)
                         presentationMode.wrappedValue.dismiss()
                     }
                 )
         }
-    }
-}
-
-struct TextNoteView_Previews: PreviewProvider {
-    static var previews: some View {
-        TextNoteView().environmentObject(NotesViewModel())
     }
 }

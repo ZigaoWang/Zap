@@ -41,8 +41,8 @@ struct NoteRowView: View {
                     case .text(let content):
                         Text(content)
                             .lineLimit(2)
-                    case .audio(let fileName, _):
-                        AudioPlayerInlineView(url: URL(fileURLWithPath: getFilePath(fileName)))
+                    case .audio:
+                        AudioPlayerInlineView(note: note)
                     case .photo(let fileName):
                         ImagePreviewView(fileName: fileName)
                             .onTapGesture {
