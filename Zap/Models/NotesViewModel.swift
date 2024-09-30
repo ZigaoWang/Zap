@@ -8,13 +8,17 @@
 import SwiftUI
 import AVFoundation
 import Speech
+import NaturalLanguage
 
 class NotesViewModel: ObservableObject {
     @Published var notes: [NoteItem] = []
     @Published var isRecording = false
     
     private var audioRecorder: AVAudioRecorder?
-    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
+    private let supportedLocales: [Locale] = [
+        Locale(identifier: "en-US"),
+        Locale(identifier: "zh-Hans")
+    ]
     
     init() {
         loadNotes()
@@ -109,16 +113,44 @@ class NotesViewModel: ObservableObject {
         guard case .audio(let fileName, _) = note.type else { return }
         
         let audioURL = getDocumentsDirectory().appendingPathComponent(fileName)
-        let request = SFSpeechURLRecognitionRequest(url: audioURL)
         
-        speechRecognizer?.recognitionTask(with: request) { [weak self] (result, error) in
-            guard let result = result else {
-                print("Transcription failed: \(error?.localizedDescription ?? "No error description")")
-                return
+        // Try transcription with each supported locale
+        for locale in supportedLocales {
+            if let speechRecognizer = SFSpeechRecognizer(locale: locale) {
+                let request = SFSpeechURLRecognitionRequest(url: audioURL)
+                request.shouldReportPartialResults = false
+                
+                speechRecognizer.recognitionTask(with: request) { [weak self] (result, error) in
+                    guard let result = result, error == nil else {
+                        print("Transcription failed for locale \(locale.identifier): \(error?.localizedDescription ?? "No error description")")
+                        return
+                    }
+                    
+                    let transcription = result.bestTranscription.formattedString
+                    if !transcription.isEmpty {
+                        self?.updateTranscription(for: note, with: transcription)
+                        return // Stop trying other locales if we get a non-empty transcription
+                    }
+                }
             }
-            
-            let transcription = result.bestTranscription.formattedString
-            self?.updateTranscription(for: note, with: transcription)
+        }
+    }
+    
+    // MARK: - Language Detection
+    
+    func detectLanguage(for text: String) -> String {
+        let languageRecognizer = NLLanguageRecognizer()
+        languageRecognizer.processString(text)
+        guard let dominantLanguage = languageRecognizer.dominantLanguage else {
+            return "Unknown"
+        }
+        switch dominantLanguage {
+        case .english:
+            return "English"
+        case .simplifiedChinese, .traditionalChinese:
+            return "Chinese"
+        default:
+            return "Other"
         }
     }
     
