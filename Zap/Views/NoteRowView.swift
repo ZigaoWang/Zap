@@ -13,6 +13,7 @@ struct NoteRowView: View {
     @EnvironmentObject var appearanceManager: AppearanceManager
     @Environment(\.colorScheme) var colorScheme
     let note: NoteItem
+    @State private var showFullScreen = false
     
     var body: some View {
         HStack(spacing: 15) {
@@ -20,13 +21,12 @@ struct NoteRowView: View {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0)) {
                     viewModel.toggleNoteCompletion(note)
                 }
-                // Removed playCompletionSound() call
             }) {
                 Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 30))
                     .foregroundColor(note.isCompleted ? appearanceManager.accentColor : .gray)
             }
-            .buttonStyle(SpringButtonStyle())
+            .buttonStyle(PlainButtonStyle())
             
             VStack(alignment: .leading, spacing: 5) {
                 HStack {
@@ -45,8 +45,14 @@ struct NoteRowView: View {
                         AudioPlayerInlineView(url: URL(fileURLWithPath: getFilePath(fileName)))
                     case .photo(let fileName):
                         ImagePreviewView(fileName: fileName)
+                            .onTapGesture {
+                                showFullScreen = true
+                            }
                     case .video(let fileName, _):
                         VideoPreviewView(fileName: fileName)
+                            .onTapGesture {
+                                showFullScreen = true
+                            }
                     }
                 }
             }
@@ -56,13 +62,8 @@ struct NoteRowView: View {
         .background(colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground))
         .opacity(note.isCompleted ? 0.6 : 1)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
-    }
-}
-
-struct SpringButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.9 : 1)
-            .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: configuration.isPressed)
+        .fullScreenCover(isPresented: $showFullScreen) {
+            FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
     }
 }

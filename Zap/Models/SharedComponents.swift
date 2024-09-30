@@ -90,3 +90,27 @@ func getFilePath(_ fileName: String) -> String {
     let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     return documentsPath.appendingPathComponent(fileName).path
 }
+
+struct FullScreenImageView: View {
+    let fileName: String
+    
+    var body: some View {
+        if let image = UIImage(contentsOfFile: getFilePath(fileName)) {
+            Image(uiImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .edgesIgnoringSafeArea(.all)
+        } else {
+            Text("Image not found")
+        }
+    }
+}
+
+struct FullScreenVideoView: View {
+    let fileName: String
+    
+    var body: some View {
+        VideoPlayer(player: AVPlayer(url: URL(fileURLWithPath: getFilePath(fileName))))
+            .edgesIgnoringSafeArea(.all)
+    }
+}

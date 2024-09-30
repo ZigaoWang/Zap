@@ -56,7 +56,7 @@ struct HomeView: View {
                         }
                     }
                 }
-                .frame(height: 150)  // Set a fixed height for the button container
+                .frame(height: 150)
                 .padding()
             }
             .navigationTitle("Zap")
@@ -106,6 +106,6 @@ struct ZapButton: View {
             .foregroundColor(.white)
             .cornerRadius(10)
         }
-        .buttonStyle(SpringButtonStyle())
+        .buttonStyle(PlainButtonStyle())
     }
 }
