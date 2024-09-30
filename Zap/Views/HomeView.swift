@@ -13,6 +13,7 @@ struct HomeView: View {
     @State private var showingImagePicker = false
     @State private var showingCameraPicker = false
     @State private var showingTextNote = false
+    @State private var showingSettings = false
     @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
@@ -21,48 +22,105 @@ struct HomeView: View {
                 List {
                     ForEach(viewModel.notes) { note in
                         NoteRowView(note: note)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    if let index = viewModel.notes.firstIndex(where: { $0.id == note.id }) {
+                                        viewModel.deleteNotes(at: IndexSet(integer: index))
+                                    }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    viewModel.toggleNoteCompletion(note)
+                                } label: {
+                                    Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
+                                }
+                                .tint(note.isCompleted ? .orange : .green)
+                            }
                     }
-                    .onDelete(perform: viewModel.deleteNotes)
                 }
 
                 HStack(spacing: 10) {
-                    VStack(spacing: 10) {
-                        ZapButton(title: "Zap Text", icon: "text.justify", color: .blue) {
-                            hapticFeedback()
-                            showingTextNote = true
+                    Button(action: {
+                        hapticFeedback()
+                        showingTextNote = true
+                    }) {
+                        VStack {
+                            Image(systemName: "text.justify")
+                                .font(.system(size: 24))
+                            Text("Zap Text")
+                                .font(.caption)
                         }
-
-                        ZapButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
-                            hapticFeedback()
-                            imagePickerSourceType = .photoLibrary
-                            showingImagePicker = true
-                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
 
-                    VStack(spacing: 10) {
-                        ZapButton(title: viewModel.isRecording ? "Stop" : "Zap Audio", icon: viewModel.isRecording ? "stop.circle" : "mic", color: viewModel.isRecording ? .red : .green) {
-                            hapticFeedback()
-                            if viewModel.isRecording {
-                                viewModel.stopRecording()
-                            } else {
-                                viewModel.startRecording()
-                            }
+                    Button(action: {
+                        hapticFeedback()
+                        if viewModel.isRecording {
+                            viewModel.stopRecording()
+                        } else {
+                            viewModel.startRecording()
                         }
+                    }) {
+                        VStack {
+                            Image(systemName: viewModel.isRecording ? "stop.circle" : "mic")
+                                .font(.system(size: 24))
+                            Text(viewModel.isRecording ? "Stop" : "Zap Audio")
+                                .font(.caption)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(viewModel.isRecording ? Color.red : Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
 
-                        ZapButton(title: "Camera", icon: "camera", color: .purple) {
-                            hapticFeedback()
-                            imagePickerSourceType = .camera
-                            showingImagePicker = true
+                    Button(action: {
+                        hapticFeedback()
+                        imagePickerSourceType = .photoLibrary
+                        showingImagePicker = true
+                    }) {
+                        VStack {
+                            Image(systemName: "photo.on.rectangle")
+                                .font(.system(size: 24))
+                            Text("Album")
+                                .font(.caption)
                         }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.orange)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+
+                    Button(action: {
+                        hapticFeedback()
+                        imagePickerSourceType = .camera
+                        showingImagePicker = true
+                    }) {
+                        VStack {
+                            Image(systemName: "camera")
+                                .font(.system(size: 24))
+                            Text("Camera")
+                                .font(.caption)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.purple)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
                     }
                 }
-                .frame(height: 150)
-                .padding()
+                .frame(height: 70)
+                .padding(.horizontal)
+                .padding(.bottom, 8)
             }
             .navigationTitle("Zap")
             .navigationBarItems(trailing:
                 Button(action: {
-                    // Add action for settings button
+                    showingSettings = true
                 }) {
                     Image(systemName: "gear")
                         .foregroundColor(.primary)
@@ -76,7 +134,12 @@ struct HomeView: View {
                 TextNoteView()
                     .environmentObject(viewModel)
             }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+                    .environmentObject(appearanceManager)
+            }
         }
+        .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
     }
 
@@ -86,26 +149,10 @@ struct HomeView: View {
     }
 }
 
-struct ZapButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                    .font(.system(size: 24))
-                Text(title)
-                    .font(.caption)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(.vertical, 10)
-            .background(color)
-            .foregroundColor(.white)
-            .cornerRadius(10)
-        }
-        .buttonStyle(PlainButtonStyle())
+struct HomeView_Previews: PreviewProvider {
+    static var previews: some View {
+        HomeView()
+            .environmentObject(NotesViewModel())
+            .environmentObject(AppearanceManager())
     }
 }
