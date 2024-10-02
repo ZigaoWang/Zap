@@ -21,7 +21,6 @@ struct AudioPlayerInlineView: View {
     @State private var transcriptionError: String?
     @State private var fileExists: Bool = false
     @State private var playerError: String?
-    @State private var detectedLanguage: String = ""
     
     let note: NoteItem
 
@@ -59,31 +58,33 @@ struct AudioPlayerInlineView: View {
             }
             
             if isTranscribing {
-                ProgressView("Transcribing...")
-                    .padding(.top, 4)
-            } else if let transcription = note.transcription, !transcription.isEmpty {
-                VStack(alignment: .leading) {
-                    Text(transcription)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text("Detected Language: \(detectedLanguage)")
-                        .font(.caption2)
+                HStack {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                    Text("Transcribing...")
+                        .font(.body)
                         .foregroundColor(.secondary)
                 }
-                .padding(.top, 4)
+                .padding(.top, 8)
+                .transition(.opacity)
+                .animation(.easeInOut, value: isTranscribing)
+            } else if let transcription = note.transcription, !transcription.isEmpty {
+                Text(transcription)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                    .padding(.top, 8)
+                    .transition(.opacity)
+                    .animation(.easeInOut, value: isTranscribing)
             } else if let error = transcriptionError {
                 Text("Transcription failed: \(error)")
-                    .font(.caption)
+                    .font(.body)
                     .foregroundColor(.red)
-                    .padding(.top, 4)
+                    .padding(.top, 8)
             }
         }
         .onAppear {
             checkFileExists()
             setupAudioPlayer()
-            if let transcription = note.transcription {
-                detectedLanguage = viewModel.detectLanguage(for: transcription)
-            }
         }
         .onDisappear {
             stopTimer()
