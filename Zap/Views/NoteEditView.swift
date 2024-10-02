@@ -76,48 +76,70 @@ struct PhotoNoteEditView: View {
     @State private var color: Color = .red
     @State private var lineWidth: CGFloat = 3
     @State private var image: UIImage?
+    @State private var scale: CGFloat = 1.0
     let note: NoteItem
     @Environment(\.presentationMode) var presentationMode
 
     var body: some View {
         NavigationView {
-            VStack {
-                if let image = image {
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .overlay(
-                            Canvas { context, size in
-                                for drawing in drawings {
-                                    var path = Path()
-                                    path.addLines(drawing.points)
-                                    context.stroke(path, with: .color(drawing.color), lineWidth: drawing.lineWidth)
+            GeometryReader { geometry in
+                VStack {
+                    if let image = image {
+                        ZStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFit()
+                                .overlay(
+                                    Canvas { context, size in
+                                        let imageSize = image.size
+                                        let scaleFactor = min(size.width / imageSize.width, size.height / imageSize.height)
+                                        let scaledSize = CGSize(width: imageSize.width * scaleFactor, height: imageSize.height * scaleFactor)
+                                        let offset = CGPoint(x: (size.width - scaledSize.width) / 2, y: (size.height - scaledSize.height) / 2)
+                                        
+                                        context.translateBy(x: offset.x, y: offset.y)
+                                        context.scaleBy(x: scaleFactor, y: scaleFactor)
+                                        
+                                        for drawing in drawings {
+                                            var path = Path()
+                                            path.addLines(drawing.points)
+                                            context.stroke(path, with: .color(drawing.color), lineWidth: drawing.lineWidth)
+                                        }
+                                        var path = Path()
+                                        path.addLines(currentDrawing.points)
+                                        context.stroke(path, with: .color(currentDrawing.color), lineWidth: currentDrawing.lineWidth)
+                                    }
+                                )
+                        }
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    let imageSize = image.size
+                                    let viewSize = geometry.size
+                                    let scaleFactor = min(viewSize.width / imageSize.width, viewSize.height / imageSize.height)
+                                    let scaledSize = CGSize(width: imageSize.width * scaleFactor, height: imageSize.height * scaleFactor)
+                                    let offset = CGPoint(x: (viewSize.width - scaledSize.width) / 2, y: (viewSize.height - scaledSize.height) / 2)
+                                    
+                                    let newPoint = CGPoint(
+                                        x: (value.location.x - offset.x) / scaleFactor,
+                                        y: (value.location.y - offset.y) / scaleFactor
+                                    )
+                                    currentDrawing.points.append(newPoint)
                                 }
-                                var path = Path()
-                                path.addLines(currentDrawing.points)
-                                context.stroke(path, with: .color(currentDrawing.color), lineWidth: currentDrawing.lineWidth)
-                            }
-                            .gesture(
-                                DragGesture(minimumDistance: 0)
-                                    .onChanged { value in
-                                        let newPoint = value.location
-                                        currentDrawing.points.append(newPoint)
-                                    }
-                                    .onEnded { _ in
-                                        drawings.append(currentDrawing)
-                                        currentDrawing = Drawing(color: color, lineWidth: lineWidth)
-                                    }
-                            )
+                                .onEnded { _ in
+                                    drawings.append(currentDrawing)
+                                    currentDrawing = Drawing(color: color, lineWidth: lineWidth)
+                                }
                         )
-                } else {
-                    Text("Image not found")
+                    } else {
+                        Text("Image not found")
+                    }
+                    
+                    HStack {
+                        ColorPicker("Color", selection: $color)
+                        Slider(value: $lineWidth, in: 1...10) { Text("Line Width") }
+                    }
+                    .padding()
                 }
-                
-                HStack {
-                    ColorPicker("Color", selection: $color)
-                    Slider(value: $lineWidth, in: 1...10) { Text("Line Width") }
-                }
-                .padding()
             }
             .navigationBarTitle("Edit Photo", displayMode: .inline)
             .navigationBarItems(

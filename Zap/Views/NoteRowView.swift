@@ -39,7 +39,13 @@ struct NoteRowView: View {
                         showingEditView = true
                     }) {
                         Image(systemName: "pencil")
+                            .font(.system(size: 20))
+                            .foregroundColor(.blue)
+                            .padding(8)
+                            .background(Color.blue.opacity(0.1))
+                            .clipShape(Circle())
                     }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 
                 Group {
