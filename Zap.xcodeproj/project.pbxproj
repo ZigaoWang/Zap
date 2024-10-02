@@ -35,6 +35,7 @@
 				ImageCache.swift,
 				ImageFullscreenView.swift,
 				ImagePicker.swift,
+				NoteEditView.swift,
 				NoteRowView.swift,
 				PrivacyPolicyView.swift,
 				SavedNotesView.swift,

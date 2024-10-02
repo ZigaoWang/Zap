@@ -8,23 +8,17 @@
 import SwiftUI
 import AVFoundation
 import Speech
-import NaturalLanguage
 
 class NotesViewModel: ObservableObject {
     @Published var notes: [NoteItem] = []
     @Published var isRecording = false
     
     private var audioRecorder: AVAudioRecorder?
-    private let supportedLocales: [Locale] = [
-        Locale(identifier: "en-US"),
-        Locale(identifier: "zh-Hans")
-    ]
+    private let speechRecognizer = SFSpeechRecognizer(locale: Locale(identifier: "en-US"))
     
     init() {
         loadNotes()
     }
-    
-    // MARK: - Note Management
     
     func addTextNote(_ text: String) {
         let newNote = NoteItem(type: .text(text))
@@ -70,8 +64,6 @@ class NotesViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Audio Recording
-    
     func startRecording() {
         let audioFilename = getDocumentsDirectory().appendingPathComponent("\(UUID().uuidString).m4a")
         
@@ -107,54 +99,74 @@ class NotesViewModel: ObservableObject {
         audioRecorder = nil
     }
     
-    // MARK: - Transcription
-    
     private func transcribeAudioNote(_ note: NoteItem) {
         guard case .audio(let fileName, _) = note.type else { return }
         
         let audioURL = getDocumentsDirectory().appendingPathComponent(fileName)
+        let request = SFSpeechURLRecognitionRequest(url: audioURL)
         
-        // Try transcription with each supported locale
-        for locale in supportedLocales {
-            if let speechRecognizer = SFSpeechRecognizer(locale: locale) {
-                let request = SFSpeechURLRecognitionRequest(url: audioURL)
-                request.shouldReportPartialResults = false
+        speechRecognizer?.recognitionTask(with: request) { [weak self] (result, error) in
+            guard let result = result else {
+                print("Transcription failed: \(error?.localizedDescription ?? "No error description")")
+                return
+            }
+            
+            let transcription = result.bestTranscription.formattedString
+            self?.updateTranscription(for: note, with: transcription)
+        }
+    }
+    
+    func updateTextNote(_ note: NoteItem, with newText: String) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            notes[index] = NoteItem(id: note.id, timestamp: note.timestamp, type: .text(newText), isCompleted: note.isCompleted, transcription: note.transcription)
+            saveNotes()
+        }
+    }
+    
+    func updateAudioNoteTranscription(_ note: NoteItem, with newTranscription: String) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            notes[index].transcription = newTranscription
+            saveNotes()
+        }
+    }
+    
+    func updatePhotoNote(_ note: NoteItem, fileName: String, annotations: [Drawing]) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            let url = getDocumentsDirectory().appendingPathComponent(fileName)
+            if let image = UIImage(contentsOfFile: url.path) {
+                UIGraphicsBeginImageContextWithOptions(image.size, false, image.scale)
+                image.draw(at: .zero)
                 
-                speechRecognizer.recognitionTask(with: request) { [weak self] (result, error) in
-                    guard let result = result, error == nil else {
-                        print("Transcription failed for locale \(locale.identifier): \(error?.localizedDescription ?? "No error description")")
-                        return
+                for drawing in annotations {
+                    let path = UIBezierPath()
+                    if let firstPoint = drawing.points.first {
+                        path.move(to: firstPoint)
+                        for point in drawing.points.dropFirst() {
+                            path.addLine(to: point)
+                        }
                     }
                     
-                    let transcription = result.bestTranscription.formattedString
-                    if !transcription.isEmpty {
-                        self?.updateTranscription(for: note, with: transcription)
-                        return // Stop trying other locales if we get a non-empty transcription
+                    UIColor(drawing.color).setStroke()
+                    path.lineWidth = drawing.lineWidth
+                    path.stroke()
+                }
+                
+                if let annotatedImage = UIGraphicsGetImageFromCurrentImageContext() {
+                    UIGraphicsEndImageContext()
+                    
+                    if let data = annotatedImage.jpegData(compressionQuality: 0.8) {
+                        do {
+                            try data.write(to: url)
+                            notes[index] = NoteItem(id: note.id, timestamp: note.timestamp, type: .photo(fileName), isCompleted: note.isCompleted, transcription: note.transcription)
+                            objectWillChange.send()
+                        } catch {
+                            print("Failed to save annotated image: \(error)")
+                        }
                     }
                 }
             }
         }
     }
-    
-    // MARK: - Language Detection
-    
-    func detectLanguage(for text: String) -> String {
-        let languageRecognizer = NLLanguageRecognizer()
-        languageRecognizer.processString(text)
-        guard let dominantLanguage = languageRecognizer.dominantLanguage else {
-            return "Unknown"
-        }
-        switch dominantLanguage {
-        case .english:
-            return "English"
-        case .simplifiedChinese, .traditionalChinese:
-            return "Chinese"
-        default:
-            return "Other"
-        }
-    }
-    
-    // MARK: - Data Persistence
     
     private func saveNotes() {
         do {
@@ -177,9 +189,18 @@ class NotesViewModel: ObservableObject {
         }
     }
     
-    // MARK: - Helpers
-    
-    private func getDocumentsDirectory() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-    }
+    func updatePhotoNote(_ note: NoteItem, fileName: String) {
+            if let index = notes.firstIndex(where: { $0.id == note.id }) {
+                notes[index] = NoteItem(id: note.id, timestamp: Date(), type: .photo(fileName), isCompleted: note.isCompleted, transcription: note.transcription)
+                saveNotes()
+            }
+        }
+        
+        func getDocumentsDirectory() -> URL {
+            FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        }
+        
+        func getFilePath(_ fileName: String) -> String {
+            getDocumentsDirectory().appendingPathComponent(fileName).path
+        }
 }

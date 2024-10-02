@@ -14,6 +14,7 @@ struct NoteRowView: View {
     @Environment(\.colorScheme) var colorScheme
     let note: NoteItem
     @State private var showFullScreen = false
+    @State private var showingEditView = false
     
     var body: some View {
         HStack(spacing: 15) {
@@ -34,6 +35,11 @@ struct NoteRowView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Spacer()
+                    Button(action: {
+                        showingEditView = true
+                    }) {
+                        Image(systemName: "pencil")
+                    }
                 }
                 
                 Group {
@@ -64,6 +70,23 @@ struct NoteRowView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
+        .sheet(isPresented: $showingEditView) {
+            editView
+        }
+    }
+    
+    @ViewBuilder
+    private var editView: some View {
+        switch note.type {
+        case .text:
+            TextNoteEditView(note: note)
+        case .audio:
+            AudioNoteEditView(note: note)
+        case .photo:
+            PhotoNoteEditView(note: note)
+        case .video:
+            Text("Video editing not implemented")
         }
     }
 }
