@@ -182,4 +182,18 @@ class NotesViewModel: ObservableObject {
     private func getDocumentsDirectory() -> URL {
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
+    
+    func editTextNote(_ note: NoteItem, newText: String) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            notes[index].type = .text(newText)
+            saveNotes()
+        }
+    }
+
+    func editAudioTranscription(_ note: NoteItem, newTranscription: String) {
+        if let index = notes.firstIndex(where: { $0.id == note.id }) {
+            notes[index].transcription = newTranscription
+            saveNotes()
+        }
+    }
 }

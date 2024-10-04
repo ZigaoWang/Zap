@@ -10,7 +10,7 @@ import Foundation
 struct NoteItem: Identifiable, Codable, Equatable {
     let id: UUID
     let timestamp: Date
-    let type: NoteType
+    var type: NoteType
     var isCompleted: Bool
     var transcription: String?
     
