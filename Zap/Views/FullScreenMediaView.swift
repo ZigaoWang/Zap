@@ -11,6 +11,8 @@ import AVKit
 struct FullScreenMediaView: View {
     let note: NoteItem
     @Binding var isPresented: Bool
+    @State private var dragOffset: CGSize = .zero
+    @GestureState private var dragState = CGSize.zero
 
     var body: some View {
         ZStack {
@@ -40,6 +42,19 @@ struct FullScreenMediaView: View {
                 Spacer()
             }
         }
+        .gesture(
+            DragGesture()
+                .updating($dragState) { value, state, _ in
+                    state = value.translation
+                }
+                .onEnded { value in
+                    if value.translation.height > 100 {
+                        isPresented = false
+                    }
+                }
+        )
+        .offset(y: dragState.height > 0 ? dragState.height : 0)
+        .animation(.interactiveSpring(), value: dragState)
     }
 
     private func getDocumentsDirectory() -> URL {
