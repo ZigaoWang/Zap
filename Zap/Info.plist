@@ -10,5 +10,9 @@
     <string>Zap needs access to your camera to take new photos and videos.</string>
     <key>NSSpeechRecognitionUsageDescription</key>
     <string>Zap needs access to speech recognition to transcribe your audio notes.</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
 </dict>
 </plist>
