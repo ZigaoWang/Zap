@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A25117902CB6B0F400E1139A /* OpenAI in Frameworks */ = {isa = PBXBuildFile; productRef = A251178F2CB6B0F400E1139A /* OpenAI */; };
 		A293D0B12C9B0941005F0A3C /* ZapApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A293D0B02C9B0941005F0A3C /* ZapApp.swift */; };
 		A293D0B52C9B0942005F0A3C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A293D0B42C9B0942005F0A3C /* Assets.xcassets */; };
 		A293D0B82C9B0942005F0A3C /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A293D0B72C9B0942005F0A3C /* Preview Assets.xcassets */; };
@@ -14,6 +15,7 @@
 
 /* Begin PBXFileReference section */
 		A2378E5A2C9B16CB0041C746 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		A25117942CB6B60F00E1139A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		A293D0AD2C9B0941005F0A3C /* Zap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A293D0B02C9B0941005F0A3C /* ZapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZapApp.swift; sourceTree = "<group>"; };
 		A293D0B42C9B0942005F0A3C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -48,6 +50,7 @@
 		A2AF7C192C9ED10A002DAC5A /* PBXFileSystemSynchronizedBuildFileExceptionSet */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				AIManager.swift,
 				AppearanceManager.swift,
 				NoteItem.swift,
 				NotesViewModel.swift,
@@ -67,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A25117902CB6B0F400E1139A /* OpenAI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -92,6 +96,7 @@
 		A293D0AF2C9B0941005F0A3C /* Zap */ = {
 			isa = PBXGroup;
 			children = (
+				A25117942CB6B60F00E1139A /* Config.xcconfig */,
 				A2378E5A2C9B16CB0041C746 /* Info.plist */,
 				A293D0B02C9B0941005F0A3C /* ZapApp.swift */,
 				A2AF7C162C9ED0B0002DAC5A /* Views */,
@@ -126,6 +131,9 @@
 			dependencies = (
 			);
 			name = Zap;
+			packageProductDependencies = (
+				A251178F2CB6B0F400E1139A /* OpenAI */,
+			);
 			productName = Zap;
 			productReference = A293D0AD2C9B0941005F0A3C /* Zap.app */;
 			productType = "com.apple.product-type.application";
@@ -154,6 +162,9 @@
 				Base,
 			);
 			mainGroup = A293D0A42C9B0941005F0A3C;
+			packageReferences = (
+				A251178E2CB6B0F400E1139A /* XCRemoteSwiftPackageReference "OpenAI" */,
+			);
 			productRefGroup = A293D0AE2C9B0941005F0A3C /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -396,6 +407,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A251178E2CB6B0F400E1139A /* XCRemoteSwiftPackageReference "OpenAI" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/MacPaw/OpenAI";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.3.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A251178F2CB6B0F400E1139A /* OpenAI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A251178E2CB6B0F400E1139A /* XCRemoteSwiftPackageReference "OpenAI" */;
+			productName = OpenAI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A293D0A52C9B0941005F0A3C /* Project object */;
 }

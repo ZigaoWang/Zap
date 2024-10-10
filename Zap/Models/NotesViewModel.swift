@@ -196,4 +196,28 @@ class NotesViewModel: ObservableObject {
             saveNotes()
         }
     }
+    
+    // MARK: - AI Summarize
+    
+    @Published var summary: String = ""
+        @Published var isSummarizing = false
+
+    func summarizeNotes() {
+            isSummarizing = true
+            Task {
+                do {
+                    let summarizedText = try await AIManager.shared.summarizeNotes(notes)
+                    DispatchQueue.main.async {
+                        self.summary = summarizedText
+                        self.isSummarizing = false
+                    }
+                } catch {
+                    print("Error summarizing notes: \(error)")
+                    DispatchQueue.main.async {
+                        self.summary = "Error summarizing notes. Please try again."
+                        self.isSummarizing = false
+                    }
+                }
+            }
+        }
 }
