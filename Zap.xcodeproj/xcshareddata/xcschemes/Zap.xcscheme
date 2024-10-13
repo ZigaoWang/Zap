@@ -50,6 +50,13 @@
             ReferencedContainer = "container:Zap.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "OPENAI_API_KEY"
+            value = "sk-proj-xox1RZOSLvJL1bX98mw8T3BlbkFJzFzUCHrcs6lRB4AX77Wm"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

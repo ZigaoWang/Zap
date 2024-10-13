@@ -81,6 +81,25 @@ struct HomeView: View {
                 .frame(height: 70)
                 .padding(.horizontal)
                 .padding(.bottom, 8)
+                Button(action: {
+                    viewModel.summarizeNotes()
+                }) {
+                    Text("Summarize Notes")
+                        .padding()
+                        .background(Color.blue)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                }
+                .disabled(viewModel.isSummarizing)
+
+                if viewModel.isSummarizing {
+                    ProgressView("Summarizing...")
+                } else if !viewModel.summary.isEmpty {
+                    Text("Summary:")
+                        .font(.headline)
+                    Text(viewModel.summary)
+                        .padding()
+                }
             }
             .navigationTitle("Zap")
             .navigationBarItems(trailing:
