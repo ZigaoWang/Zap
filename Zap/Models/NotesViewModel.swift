@@ -36,7 +36,11 @@ class NotesViewModel: ObservableObject {
         let newNote = NoteItem(type: .audio(fileName, duration))
         notes.insert(newNote, at: 0)
         saveNotes()
-        transcribeAudioNote(newNote)
+        
+        // Start transcription asynchronously
+        Task {
+            await transcribeAudioNote(newNote)
+        }
     }
     
     func addPhotoNote(fileName: String) {
@@ -109,30 +113,19 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - Transcription
     
-    private func transcribeAudioNote(_ note: NoteItem) {
+    func transcribeAudioNote(_ note: NoteItem) async {
         guard case .audio(let fileName, _) = note.type else { return }
         
-        let audioURL = getDocumentsDirectory().appendingPathComponent(fileName)
-        
-        // Try transcription with each supported locale
-        for locale in supportedLocales {
-            if let speechRecognizer = SFSpeechRecognizer(locale: locale) {
-                let request = SFSpeechURLRecognitionRequest(url: audioURL)
-                request.shouldReportPartialResults = false
-                
-                speechRecognizer.recognitionTask(with: request) { [weak self] (result, error) in
-                    guard let result = result, error == nil else {
-                        print("Transcription failed for locale \(locale.identifier): \(error?.localizedDescription ?? "No error description")")
-                        return
-                    }
-                    
-                    let transcription = result.bestTranscription.formattedString
-                    if !transcription.isEmpty {
-                        self?.updateTranscription(for: note, with: transcription)
-                        return // Stop trying other locales if we get a non-empty transcription
-                    }
+        do {
+            let transcription = try await AIManager.shared.transcribeAudio(fileName: fileName)
+            await MainActor.run {
+                if let index = notes.firstIndex(where: { $0.id == note.id }) {
+                    notes[index].transcription = transcription
+                    saveNotes()
                 }
             }
+        } catch {
+            print("Error transcribing audio: \(error)")
         }
     }
     
@@ -199,25 +192,25 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - AI Summarize
     
-    @Published var summary: String = ""
-        @Published var isSummarizing = false
+@Published var summary: String = ""
+@Published var isSummarizing = false
 
-    func summarizeNotes() {
-            isSummarizing = true
-            Task {
-                do {
-                    let summarizedText = try await AIManager.shared.summarizeNotes(notes)
-                    DispatchQueue.main.async {
-                        self.summary = summarizedText
-                        self.isSummarizing = false
-                    }
-                } catch {
-                    print("Error summarizing notes: \(error)")
-                    DispatchQueue.main.async {
-                        self.summary = "Error summarizing notes. Please try again."
-                        self.isSummarizing = false
-                    }
-                }
+func summarizeNotes() {
+    isSummarizing = true
+    Task {
+        do {
+            let summarizedText = try await AIManager.shared.summarizeNotes(notes)
+            await MainActor.run {
+                self.summary = summarizedText
+                self.isSummarizing = false
+            }
+        } catch {
+            print("Error summarizing notes: \(error)")
+            await MainActor.run {
+                self.summary = "Error summarizing notes. Please try again."
+                self.isSummarizing = false
             }
         }
+    }
+}
 }
