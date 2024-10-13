@@ -15,7 +15,6 @@
 
 /* Begin PBXFileReference section */
 		A2378E5A2C9B16CB0041C746 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
-		A25117942CB6B60F00E1139A /* Config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Config.xcconfig; sourceTree = "<group>"; };
 		A293D0AD2C9B0941005F0A3C /* Zap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Zap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A293D0B02C9B0941005F0A3C /* ZapApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZapApp.swift; sourceTree = "<group>"; };
 		A293D0B42C9B0942005F0A3C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -96,7 +95,6 @@
 		A293D0AF2C9B0941005F0A3C /* Zap */ = {
 			isa = PBXGroup;
 			children = (
-				A25117942CB6B60F00E1139A /* Config.xcconfig */,
 				A2378E5A2C9B16CB0041C746 /* Info.plist */,
 				A293D0B02C9B0941005F0A3C /* ZapApp.swift */,
 				A2AF7C162C9ED0B0002DAC5A /* Views */,

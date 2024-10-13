@@ -12,12 +12,7 @@ class AIManager {
     static let shared = AIManager()
     private init() {}
     
-    private let openAI: OpenAI = {
-        guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] else {
-            fatalError("OpenAI API Key not set in environment variables")
-        }
-        return OpenAI(apiToken: apiKey)
-    }()
+    private let backendURL = URL(string: "https://api.zap.zigao.wang/api/openai")!
     
     func summarizeNotes(_ notes: [NoteItem]) async throws -> String {
         var textToSummarize = ""
@@ -40,16 +35,46 @@ class AIManager {
             }
         }
         
-        let query = ChatQuery(messages: [
-            .init(role: .system, content: "You are a helpful assistant that summarizes notes.")!,
-            .init(role: .user, content: "Please summarize the following notes:\n\n\(textToSummarize)")!
-        ], model: .gpt4_o_mini)
+        // Explicitly define the type of the query dictionary
+        let query: [String: Any] = [
+            "model": "gpt-4o-mini",
+            "messages": [
+                ["role": "system", "content": "You are a helpful assistant that summarizes notes."],
+                ["role": "user", "content": "Please summarize the following notes:\n\n\(textToSummarize)"]
+            ]
+        ]
         
-        let result = try await openAI.chats(query: query)
+        let jsonData = try JSONSerialization.data(withJSONObject: query)
         
-        if let firstChoice = result.choices.first,
-           let content = firstChoice.message.content {
-            return String(describing: content)
+        var request = URLRequest(url: backendURL)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = jsonData
+        
+        let (data, _) = try await URLSession.shared.data(for: request)
+
+        do {
+            if let result = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let choices = result["choices"] as? [[String: Any]],
+               let firstChoice = choices.first,
+               let message = firstChoice["message"] as? [String: Any],
+               let content = message["content"] as? String {
+                return content
+            } else {
+                return "Unable to summarize notes."
+            }
+        } catch {
+            print("Error parsing JSON: \(error.localizedDescription)")
+            return "Error summarizing notes. Please try again."
+        }
+        
+        // Decode the result as a dictionary and extract the content
+        if let result = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let choices = result["choices"] as? [[String: Any]],
+           let firstChoice = choices.first,
+           let message = firstChoice["message"] as? [String: Any],
+           let content = message["content"] as? String {
+            return content
         } else {
             return "Unable to summarize notes."
         }
@@ -58,6 +83,12 @@ class AIManager {
     private func transcribeAudio(fileName: String) async throws -> String {
         let audioURL = getDocumentsDirectory().appendingPathComponent(fileName)
         let audioData = try Data(contentsOf: audioURL)
+        
+        // Ensure the openAI instance is properly initialized
+        guard let apiKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] else {
+            fatalError("OpenAI API Key not set in environment variables")
+        }
+        let openAI = OpenAI(apiToken: apiKey)
         
         let query = AudioTranscriptionQuery(file: audioData, fileType: .m4a, model: "whisper-1")
         let transcription = try await openAI.audioTranscriptions(query: query)
