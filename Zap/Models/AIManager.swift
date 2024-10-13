@@ -39,7 +39,7 @@ class AIManager {
         let query: [String: Any] = [
             "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": "You are a helpful assistant that summarizes notes."],
+                ["role": "system", "content": "You are a helpful assistant that summarizes notes. Keep your response short, and respond in the language the user is using."],
                 ["role": "user", "content": "Please summarize the following notes:\n\n\(textToSummarize)"]
             ]
         ]
