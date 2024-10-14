@@ -1,18 +1,19 @@
 # Zap App
 
-Zap is a versatile note-taking application that allows users to quickly record their thoughts, ideas, and tasks using text, voice, and photos. With future plans for AI-powered smart categorization and management, Zap aims to provide a more convenient and efficient recording experience.
+Zap is an AI-powered note-taking application that allows users to quickly record and analyze their thoughts, ideas, and tasks using text, voice, and photos. With advanced AI capabilities for smart summarization, image analysis, and audio transcription, Zap provides a more convenient and efficient recording experience.
 
-## Current Features
+## Features
 
 - Multi-modal input: Text, voice, and photo capture
-- Audio recording and playback
-- Image and video capture and viewing
+- AI-powered note summarization
+- Image analysis and description
+- Smart audio transcription
 - Note management (add, edit, delete, mark as complete)
 - Customizable appearance settings
 
 ## Planned Features
 
-- AI-powered smart categorization and management
+- Enhanced AI-powered categorization and tagging
 - Cross-platform synchronization
 - Multi-platform support
 
@@ -23,18 +24,20 @@ The project is organized into several key components:
 - `ContentView.swift`: The main entry point of the app
 - `HomeView.swift`: The primary view for displaying and managing notes
 - `NoteRowView.swift`: Individual note display component
-- `AudioNoteView.swift`: Audio recording functionality
+- `AudioNoteView.swift`: Audio recording and transcription functionality
 - `ImagePicker.swift`: Photo and video capture functionality
 - `FullScreenMediaView.swift`: Full-screen media viewing
 - `AppearanceSettingsView.swift`: Customizable appearance settings
+- `AIManager.swift`: Handles AI-related operations (summarization, image analysis, transcription)
 
 ## For AI or Contributors
 
-This project is currently in the prototype stage. The main focus areas for future development include:
+This project has recently integrated AI capabilities. The main focus areas for future development include:
 
-1. Implementing AI-powered categorization and management of notes
+1. Enhancing AI-powered categorization and tagging of notes
 2. Developing cross-platform synchronization capabilities
 3. Expanding to support multiple platforms (iOS, macOS, web)
+4. Improving AI model accuracy and performance
 
 When contributing to this project, please follow the commit message guidelines provided below to maintain a clean and organized project history.
 
