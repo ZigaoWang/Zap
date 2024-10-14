@@ -6,6 +6,10 @@
 //
 
 import Foundation
+import UIKit
+import Vision
+import os.log
+import AVFoundation
 
 class AIManager {
     static let shared = AIManager()
@@ -19,78 +23,114 @@ class AIManager {
         self.apiKey = apiKey
     }
     
-    func transcribeAudio(fileName: String) async throws -> String {
-        let audioURL = getDocumentsDirectory().appendingPathComponent(fileName)
-        let audioData = try Data(contentsOf: audioURL)
+    func summarizeNotes(_ notes: [NoteItem]) async throws -> String {
+        var messages: [[String: Any]] = [
+            ["role": "system", "content": "You are a helpful assistant that summarizes notes, including descriptions of images."]
+        ]
         
-        var request = URLRequest(url: apiBaseURL.appendingPathComponent("transcribe"))
-        request.httpMethod = "POST"
-        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
-        request.setValue("multipart/form-data", forHTTPHeaderField: "Content-Type")
+        for (index, note) in notes.enumerated() {
+            switch note.type {
+            case .text(let content):
+                messages.append(["role": "user", "content": content])
+                print("Added text note \(index): \(content)")
+            case .photo(let fileName):
+                if let image = loadImage(fileName: fileName),
+                   let description = try await analyzeImage(image) {
+                    messages.append(["role": "user", "content": "Image description: \(description)"])
+                    print("Added image note \(index): \(fileName) with description")
+                } else {
+                    print("Failed to process image note \(index): \(fileName)")
+                }
+            case .video(let fileName, _):
+                messages.append(["role": "user", "content": "Video: \(fileName)"])
+                print("Added video note \(index): \(fileName)")
+            case .audio(_, _):
+                if let transcription = note.transcription {
+                    messages.append(["role": "user", "content": "Audio transcription: \(transcription)"])
+                    print("Added audio note \(index) with transcription")
+                } else {
+                    print("Audio note \(index) has no transcription")
+                }
+            }
+        }
+        
+        messages.append(["role": "user", "content": "Please summarize all the notes, including descriptions of images."])
+        
+        return try await sendSummarizationRequest(messages: messages)
+    }
+    
+    private func analyzeImage(_ image: UIImage) async throws -> String? {
+        guard let imageData = compressImage(image) else {
+            print("Failed to compress image")
+            return nil
+        }
         
         let boundary = UUID().uuidString
+        var request = URLRequest(url: apiBaseURL.appendingPathComponent("process-notes"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         
         var body = Data()
+        
+        // Add text content
+        let textContent = "Please analyze this image and provide a brief description."
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(fileName)\"\r\n".data(using: .utf8)!)
-        body.append("Content-Type: audio/mpeg\r\n\r\n".data(using: .utf8)!)
-        body.append(audioData)
+        body.append("Content-Disposition: form-data; name=\"text\"\r\n\r\n".data(using: .utf8)!)
+        body.append(textContent.data(using: .utf8)!)
         body.append("\r\n".data(using: .utf8)!)
+        
+        // Add image
         body.append("--\(boundary)\r\n".data(using: .utf8)!)
-        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
-        body.append("whisper-1".data(using: .utf8)!)
-        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"images\"; filename=\"image.jpg\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: image/jpeg\r\n\r\n".data(using: .utf8)!)
+        body.append(imageData)
+        body.append("\r\n".data(using: .utf8)!)
+        
+        // Add closing boundary
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         
         request.httpBody = body
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        // Debug: Print raw response and status code
-        if let httpResponse = response as? HTTPURLResponse {
-            print("HTTP Status Code: \(httpResponse.statusCode)")
-        }
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Raw transcription response: \(jsonString)")
+        guard let httpResponse = response as? HTTPURLResponse else {
+            print("Invalid response type")
+            return nil
         }
         
-        // Handle server errors
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
-            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let errorMessage = json["error"] as? String {
-                throw NSError(domain: "AIManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMessage])
-            } else {
-                throw NSError(domain: "AIManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Server error occurred"])
+        print("HTTP Status Code: \(httpResponse.statusCode)")
+        print("Response Headers: \(httpResponse.allHeaderFields)")
+        
+        if !(200...299).contains(httpResponse.statusCode) {
+            print("HTTP request failed: \(response)")
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("Response body: \(responseString)")
             }
+            return nil
         }
         
-        // Try to decode the response
-        if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-           let text = json["text"] as? String {
-            return text
-        } else {
-            throw NSError(domain: "AIManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Unable to parse transcription response"])
+        do {
+            if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+               let choices = json["choices"] as? [[String: Any]],
+               let firstChoice = choices.first,
+               let message = firstChoice["message"] as? [String: Any],
+               let content = message["content"] as? String {
+                return content
+            } else {
+                print("Failed to parse image analysis response")
+                if let responseString = String(data: data, encoding: .utf8) {
+                    print("Raw response: \(responseString)")
+                }
+                return nil
+            }
+        } catch {
+            print("Error parsing JSON: \(error)")
+            return nil
         }
     }
     
-    func summarizeNotes(_ notes: [NoteItem]) async throws -> String {
-        var textToSummarize = ""
-        
-        for note in notes {
-            switch note.type {
-            case .text(let content):
-                textToSummarize += content + "\n\n"
-            case .photo(let fileName):
-                textToSummarize += "Image: \(fileName)\n\n"
-            case .video(let fileName, _):
-                textToSummarize += "Video: \(fileName)\n\n"
-            case .audio(_, _):
-                if let transcription = note.transcription {
-                    textToSummarize += transcription + "\n\n"
-                }
-            }
-        }
-        
+    private func sendSummarizationRequest(messages: [[String: Any]]) async throws -> String {
         var request = URLRequest(url: apiBaseURL.appendingPathComponent("chat"))
         request.httpMethod = "POST"
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
@@ -98,48 +138,100 @@ class AIManager {
         
         let requestBody: [String: Any] = [
             "model": "gpt-4o-mini",
-            "messages": [
-                ["role": "system", "content": "You are a helpful assistant that summarizes notes."],
-                ["role": "user", "content": "Please summarize the following notes:\n\n\(textToSummarize)"]
-            ],
-            "max_tokens": 150
+            "messages": messages,
+            "max_tokens": 500
         ]
         
         request.httpBody = try JSONSerialization.data(withJSONObject: requestBody)
         
         let (data, response) = try await URLSession.shared.data(for: request)
         
-        // Debug: Print raw response and status code
-        if let httpResponse = response as? HTTPURLResponse {
-            print("HTTP Status Code: \(httpResponse.statusCode)")
-        }
-        if let jsonString = String(data: data, encoding: .utf8) {
-            print("Raw summarization response: \(jsonString)")
+        guard let httpResponse = response as? HTTPURLResponse, 200...299 ~= httpResponse.statusCode else {
+            print("HTTP request failed: \(response)")
+            throw NSError(domain: "AIManager", code: 3, userInfo: [NSLocalizedDescriptionKey: "HTTP request failed"])
         }
         
-        // Handle server errors
-        if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode >= 400 {
-            if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
-               let errorMessage = json["error"] as? String {
-                throw NSError(domain: "AIManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: errorMessage])
-            } else {
-                throw NSError(domain: "AIManager", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: "Server error occurred"])
-            }
-        }
-        
-        // Try to decode the response
-        if let json = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
            let choices = json["choices"] as? [[String: Any]],
            let firstChoice = choices.first,
            let message = firstChoice["message"] as? [String: Any],
            let content = message["content"] as? String {
             return content
         } else {
-            throw NSError(domain: "AIManager", code: 2, userInfo: [NSLocalizedDescriptionKey: "Unable to parse summarization response"])
+            print("Failed to parse summarization response. Raw data: \(String(data: data, encoding: .utf8) ?? "Unable to convert data to string")")
+            throw NSError(domain: "AIManager", code: 4, userInfo: [NSLocalizedDescriptionKey: "Unable to parse summarization response"])
         }
     }
     
-    private func getDocumentsDirectory() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+    private func loadImage(fileName: String) -> UIImage? {
+        if let image = UIImage(named: fileName) {
+            return image
+        }
+        
+        let documentsDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+        if let imagePath = documentsDirectory?.appendingPathComponent(fileName),
+           let image = UIImage(contentsOfFile: imagePath.path) {
+            return image
+        }
+        
+        print("Failed to load image: \(fileName)")
+        return nil
     }
+    
+    func transcribeAudio(url: URL) async throws -> String {
+        let audioData = try Data(contentsOf: url)
+        
+        let boundary = UUID().uuidString
+        var request = URLRequest(url: apiBaseURL.appendingPathComponent("transcribe"))
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        
+        var body = Data()
+        
+        // Add model field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"model\"\r\n\r\n".data(using: .utf8)!)
+        body.append("whisper-1\r\n".data(using: .utf8)!)
+        
+        // Add file field
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"audio.m4a\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: audio/m4a\r\n\r\n".data(using: .utf8)!)
+        body.append(audioData)
+        body.append("\r\n".data(using: .utf8)!)
+        
+        // Add closing boundary
+        body.append("--\(boundary)--\r\n".data(using: .utf8)!)
+        
+        request.httpBody = body
+        
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard let httpResponse = response as? HTTPURLResponse, 200...299 ~= httpResponse.statusCode else {
+            print("HTTP request failed: \(response)")
+            throw NSError(domain: "AIManager", code: 0, userInfo: [NSLocalizedDescriptionKey: "Server error"])
+        }
+        
+        if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any],
+           let transcription = json["text"] as? String {
+            return transcription
+        } else {
+            print("Failed to parse transcription response. Raw data: \(String(data: data, encoding: .utf8) ?? "Unable to convert data to string")")
+            throw NSError(domain: "AIManager", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to parse transcription response"])
+        }
+    }
+}
+
+private func compressImage(_ image: UIImage, maxSizeKB: Int = 1000) -> Data? {
+    var compression: CGFloat = 1.0
+    let maxCompression: CGFloat = 0.1
+    var imageData = image.jpegData(compressionQuality: compression)
+    
+    while (imageData?.count ?? 0) > maxSizeKB * 1024 && compression > maxCompression {
+        compression -= 0.1
+        imageData = image.jpegData(compressionQuality: compression)
+    }
+    
+    return imageData
 }

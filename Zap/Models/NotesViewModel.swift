@@ -117,7 +117,8 @@ class NotesViewModel: ObservableObject {
         guard case .audio(let fileName, _) = note.type else { return }
         
         do {
-            let transcription = try await AIManager.shared.transcribeAudio(fileName: fileName)
+            let audioFileURL = getDocumentsDirectory().appendingPathComponent(fileName)
+            let transcription = try await AIManager.shared.transcribeAudio(url: audioFileURL)
             await MainActor.run {
                 if let index = notes.firstIndex(where: { $0.id == note.id }) {
                     notes[index].transcription = transcription
