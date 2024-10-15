@@ -10,16 +10,23 @@ import SwiftUI
 struct HomeView: View {
     @EnvironmentObject var viewModel: NotesViewModel
     @EnvironmentObject var appearanceManager: AppearanceManager
-    @State private var showingImagePicker = false
-    @State private var showingCameraPicker = false
     @State private var showingTextNote = false
     @State private var showingSettings = false
-    @State private var imagePickerSourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showingImagePicker = false
+    @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
         NavigationView {
-            VStack {
+            VStack(spacing: 0) {
+                // Notes list
                 List {
+                    if !viewModel.summary.isEmpty {
+                        Section(header: Text("Summary")) {
+                            Text(viewModel.summary)
+                                .font(.subheadline)
+                        }
+                    }
+                    
                     ForEach(viewModel.notes) { note in
                         NoteRowView(note: note)
                             .swipeActions(edge: .trailing) {
@@ -47,88 +54,83 @@ struct HomeView: View {
                             }
                     }
                 }
+                .listStyle(InsetGroupedListStyle())
 
-                HStack(spacing: 10) {
-                    mainActionButton(title: "Zap Text", icon: "text.justify", color: .blue) {
-                        HapticManager.shared.impact(.medium)
-                        showingTextNote = true
-                    }
-
-                    mainActionButton(title: viewModel.isRecording ? "Stop" : "Zap Audio",
-                                     icon: viewModel.isRecording ? "stop.circle" : "mic",
-                                     color: viewModel.isRecording ? .red : .green) {
-                        if viewModel.isRecording {
-                            viewModel.stopRecording()
-                            HapticManager.shared.notification(.success)
-                        } else {
-                            viewModel.startRecording()
-                            HapticManager.shared.impact(.heavy)
-                        }
-                    }
-
-                    mainActionButton(title: "Album", icon: "photo.on.rectangle", color: .orange) {
-                        HapticManager.shared.impact(.medium)
-                        imagePickerSourceType = .photoLibrary
-                        showingImagePicker = true
-                    }
-
-                    mainActionButton(title: "Camera", icon: "camera", color: .purple) {
-                        HapticManager.shared.impact(.medium)
-                        imagePickerSourceType = .camera
-                        showingImagePicker = true
-                    }
-                }
-                .frame(height: 70)
-                .padding(.horizontal)
-                .padding(.bottom, 8)
+                // Summarize button
                 Button(action: {
                     viewModel.summarizeNotes()
                 }) {
-                    Text("Summarize Notes")
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(10)
+                    HStack {
+                        Image(systemName: "wand.and.stars")
+                        Text("Magically Summarize")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
                 }
+                .padding()
                 .disabled(viewModel.isSummarizing)
+                .overlay(
+                    Group {
+                        if viewModel.isSummarizing {
+                            HStack {
+                                ProgressView()
+                                Text("Generating summary...")
+                            }
+                            .padding()
+                            .background(Color.black.opacity(0.7))
+                            .foregroundColor(.white)
+                            .cornerRadius(10)
+                        }
+                    }
+                )
 
-                if viewModel.isSummarizing {
-                    ProgressView("Summarizing...")
-                } else if !viewModel.summary.isEmpty {
-                    Text("Summary:")
-                        .font(.headline)
-                    Text(viewModel.summary)
-                        .padding()
+                // Zap buttons
+                HStack(spacing: 15) {
+                    zapButton(title: "Text", icon: "text.justify", color: .blue) {
+                        showingTextNote = true
+                    }
+                    zapButton(title: "Audio", icon: "mic", color: .green) {
+                        viewModel.startRecording()
+                    }
+                    zapButton(title: "Camera", icon: "camera", color: .orange) {
+                        imageSource = .camera
+                        showingImagePicker = true
+                    }
+                    zapButton(title: "Album", icon: "photo", color: .purple) {
+                        imageSource = .photoLibrary
+                        showingImagePicker = true
+                    }
                 }
+                .padding()
             }
             .navigationTitle("Zap")
-            .navigationBarItems(trailing:
-                Button(action: {
-                    HapticManager.shared.impact(.light)
-                    showingSettings = true
-                }) {
-                    Image(systemName: "gear")
-                        .foregroundColor(.primary)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gear")
+                    }
                 }
-            )
-            .sheet(isPresented: $showingImagePicker) {
-                ImagePicker(sourceType: imagePickerSourceType)
-                    .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $showingTextNote) {
-                TextNoteView()
-                    .environmentObject(viewModel)
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
-                    .environmentObject(appearanceManager)
             }
         }
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
+        .sheet(isPresented: $showingTextNote) {
+            TextNoteView().environmentObject(viewModel)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView().environmentObject(appearanceManager)
+        }
+        .sheet(isPresented: $showingImagePicker) {
+            ImagePicker(sourceType: imageSource)
+        }
     }
 
-    private func mainActionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func zapButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack {
                 Image(systemName: icon)
@@ -136,7 +138,8 @@ struct HomeView: View {
                 Text(title)
                     .font(.caption)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
             .background(color)
             .foregroundColor(.white)
             .cornerRadius(10)
