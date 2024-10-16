@@ -54,21 +54,21 @@ struct NoteRowView: View {
                         switch note.type {
                         case .text(let content):
                             if isEditing {
-                                TextField("Edit note", text: $editedContent)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                                TextEditor(text: $editedContent)
+                                    .frame(height: 100)
+                                    .border(Color.gray, width: 1)
                             } else {
                                 Text(content)
-                                    .lineLimit(2)
                             }
                         case .audio(let fileName, let duration):
                             AudioPlayerInlineView(note: note)
                             if let transcription = note.transcription {
                                 if isEditing {
-                                    TextField("Edit transcription", text: $editedContent)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    TextEditor(text: $editedContent)
+                                        .frame(height: 100)
+                                        .border(Color.gray, width: 1)
                                 } else {
                                     Text(transcription)
-                                        .lineLimit(2)
                                 }
                             }
                         case .photo(let fileName):
@@ -96,6 +96,7 @@ struct NoteRowView: View {
                     .foregroundColor(.blue)
                 }
                 .padding(.top, 4)
+                .transition(.opacity)
             }
         }
         .padding(.vertical, 8)

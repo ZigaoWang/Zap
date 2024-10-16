@@ -17,8 +17,6 @@ struct AudioPlayerInlineView: View {
     @State private var playbackTime: Double = 0
     @State private var duration: Double = 0
     @State private var timer: Timer?
-    @State private var isTranscribing = false
-    @State private var transcriptionError: String?
     @State private var fileExists: Bool = false
     @State private var playerError: String?
     
@@ -55,31 +53,6 @@ struct AudioPlayerInlineView: View {
             } else {
                 Text("Audio file not found")
                     .foregroundColor(.red)
-            }
-            
-            if isTranscribing {
-                HStack {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                    Text("Transcribing...")
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.top, 8)
-                .transition(.opacity)
-                .animation(.easeInOut, value: isTranscribing)
-            } else if let transcription = note.transcription, !transcription.isEmpty {
-                Text(transcription)
-                    .font(.body)
-                    .foregroundColor(.primary)
-                    .padding(.top, 8)
-                    .transition(.opacity)
-                    .animation(.easeInOut, value: isTranscribing)
-            } else if let error = transcriptionError {
-                Text("Transcription failed: \(error)")
-                    .font(.body)
-                    .foregroundColor(.red)
-                    .padding(.top, 8)
             }
         }
         .onAppear {
