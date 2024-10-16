@@ -16,7 +16,7 @@ struct AboutHelpView: View {
                 HStack {
                     Text("App Version")
                     Spacer()
-                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
+                    Text(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "Unknown")
                         .foregroundColor(.secondary)
                 }
                 
