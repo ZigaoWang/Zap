@@ -92,8 +92,16 @@ struct HomeView: View {
                     zapButton(title: "Text", icon: "text.justify", color: .blue) {
                         showingTextNote = true
                     }
-                    zapButton(title: "Audio", icon: "mic", color: .green) {
-                        viewModel.startRecording()
+                    zapButton(title: viewModel.isRecording ? "Stop" : "Audio",
+                              icon: viewModel.isRecording ? "stop.circle" : "mic",
+                              color: viewModel.isRecording ? .red : .green) {
+                        if viewModel.isRecording {
+                            viewModel.stopRecording()
+                            HapticManager.shared.notification(.success)
+                        } else {
+                            viewModel.startRecording()
+                            HapticManager.shared.impact(.heavy)
+                        }
                     }
                     zapButton(title: "Camera", icon: "camera", color: .orange) {
                         imageSource = .camera
