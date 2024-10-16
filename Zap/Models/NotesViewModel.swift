@@ -13,6 +13,9 @@ import NaturalLanguage
 class NotesViewModel: ObservableObject {
     @Published var notes: [NoteItem] = []
     @Published var isRecording = false
+    @Published var isSummarizing = false
+    @Published var summary: String = ""
+    @Published var errorMessage: String? = nil
     
     private var audioRecorder: AVAudioRecorder?
     private let supportedLocales: [Locale] = [
@@ -77,22 +80,27 @@ class NotesViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
-        let audioFilename = getDocumentsDirectory().appendingPathComponent("\(UUID().uuidString).m4a")
-        
-        let settings = [
-            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-            AVSampleRateKey: 44100,
-            AVNumberOfChannelsKey: 2,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-        ]
-        
+        let audioSession = AVAudioSession.sharedInstance()
         do {
-            try AVAudioSession.sharedInstance().setCategory(.playAndRecord, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
+            try audioSession.setCategory(.playAndRecord, mode: .default)
+            try audioSession.setActive(true)
+            
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let audioFilename = documentsPath.appendingPathComponent("\(UUID().uuidString).m4a")
+            
+            let settings = [
+                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+                AVSampleRateKey: 44100,
+                AVNumberOfChannelsKey: 2,
+                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+            ]
             
             audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
             audioRecorder?.record()
-            isRecording = true
+            
+            DispatchQueue.main.async {
+                self.isRecording = true
+            }
         } catch {
             print("Could not start recording: \(error)")
         }
@@ -100,15 +108,16 @@ class NotesViewModel: ObservableObject {
     
     func stopRecording() {
         audioRecorder?.stop()
-        isRecording = false
         
-        if let recorder = audioRecorder {
-            let duration = recorder.currentTime
-            let fileName = recorder.url.lastPathComponent
-            addAudioNote(fileName: fileName, duration: duration)
+        DispatchQueue.main.async {
+            self.isRecording = false
+            if let recorder = self.audioRecorder {
+                let audioFilename = recorder.url.lastPathComponent
+                let duration = recorder.currentTime
+                self.addAudioNote(fileName: audioFilename, duration: duration)
+            }
+            self.audioRecorder = nil
         }
-        
-        audioRecorder = nil
     }
     
     // MARK: - Transcription
@@ -193,25 +202,22 @@ class NotesViewModel: ObservableObject {
     
     // MARK: - AI Summarize
     
-@Published var summary: String = ""
-@Published var isSummarizing = false
-
-func summarizeNotes() {
-    isSummarizing = true
-    Task {
-        do {
-            let summarizedText = try await AIManager.shared.summarizeNotes(notes)
-            await MainActor.run {
-                self.summary = summarizedText
-                self.isSummarizing = false
-            }
-        } catch {
-            print("Error summarizing notes: \(error)")
-            await MainActor.run {
-                self.summary = "Error summarizing notes. Please try again."
-                self.isSummarizing = false
+    func summarizeNotes() {
+        Task {
+            do {
+                self.isSummarizing = true
+                self.errorMessage = nil
+                let newSummary = try await AIManager.shared.summarizeNotes(notes)
+                await MainActor.run {
+                    self.summary = newSummary
+                    self.isSummarizing = false
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Failed to generate summary: \(error.localizedDescription)"
+                    self.isSummarizing = false
+                }
             }
         }
     }
-}
 }

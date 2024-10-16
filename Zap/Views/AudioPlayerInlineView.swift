@@ -11,126 +11,67 @@ import Speech
 
 struct AudioPlayerInlineView: View {
     @EnvironmentObject var appearanceManager: AppearanceManager
-    @EnvironmentObject var viewModel: NotesViewModel
-    @State private var audioPlayer: AVAudioPlayer?
+    @State private var player: AVPlayer?
     @State private var isPlaying = false
-    @State private var playbackTime: Double = 0
-    @State private var duration: Double = 0
-    @State private var timer: Timer?
-    @State private var fileExists: Bool = false
-    @State private var playerError: String?
+    @State private var progress: Double = 0
+    @State private var duration: Double = 0.01  // 设置一个非零的最小值
     
     let note: NoteItem
-
+    
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            if fileExists {
-                if let error = playerError {
-                    Text("Playback error: \(error)")
-                        .foregroundColor(.red)
-                } else {
-                    HStack {
-                        Button(action: {
-                            togglePlayPause()
-                        }) {
-                            Image(systemName: isPlaying ? "stop.fill" : "play.fill")
-                                .resizable()
-                                .frame(width: 24, height: 24)
-                                .foregroundColor(isPlaying ? .red : appearanceManager.accentColor)
-                        }
-
-                        Slider(value: $playbackTime, in: 0...duration, onEditingChanged: { editing in
-                            if !editing {
-                                audioPlayer?.currentTime = playbackTime
-                            }
-                        })
-                        .accentColor(appearanceManager.accentColor)
-
-                        Text(formatTime(playbackTime))
-                            .font(.caption)
+        VStack {
+            HStack {
+                Button(action: togglePlayPause) {
+                    Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.title)
+                        .foregroundColor(appearanceManager.accentColor)
+                }
+                
+                Slider(value: $progress, in: 0...max(duration, 0.01)) { editing in
+                    if !editing {
+                        player?.seek(to: CMTime(seconds: progress, preferredTimescale: 1000))
                     }
                 }
-            } else {
-                Text("Audio file not found")
-                    .foregroundColor(.red)
+                .accentColor(appearanceManager.accentColor)
+                
+                Text(formatTime(progress))
+                    .font(.caption)
             }
         }
-        .onAppear {
-            checkFileExists()
-            setupAudioPlayer()
-        }
+        .onAppear(perform: setupPlayer)
         .onDisappear {
-            stopTimer()
-            audioPlayer?.stop()
+            player?.pause()
+            player = nil
         }
     }
-
-    private func checkFileExists() {
-        guard case .audio(let fileName, _) = note.type else {
-            print("Note is not an audio note")
-            return
-        }
-        let url = getDocumentsDirectory().appendingPathComponent(fileName)
-        fileExists = FileManager.default.fileExists(atPath: url.path)
-        print("Audio file exists: \(fileExists), path: \(url.path)")
-    }
-
-    private func setupAudioPlayer() {
-        guard case .audio(let fileName, _) = note.type else {
-            print("Note is not an audio note")
-            return
-        }
-        let url = getDocumentsDirectory().appendingPathComponent(fileName)
+    
+    private func setupPlayer() {
+        guard case .audio(let fileName, _) = note.type else { return }
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let audioUrl = documentsPath.appendingPathComponent(fileName)
         
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-            
-            audioPlayer = try AVAudioPlayer(contentsOf: url)
-            duration = audioPlayer?.duration ?? 0
-            audioPlayer?.prepareToPlay()
-            playerError = nil
-        } catch {
-            print("Error setting up audio player: \(error.localizedDescription)")
-            playerError = error.localizedDescription
+        player = AVPlayer(url: audioUrl)
+        player?.addPeriodicTimeObserver(forInterval: CMTime(seconds: 0.1, preferredTimescale: 1000), queue: .main) { time in
+            progress = time.seconds
+        }
+        
+        if let duration = player?.currentItem?.duration, duration.seconds.isFinite {
+            self.duration = max(duration.seconds, 0.01)
         }
     }
-
+    
     private func togglePlayPause() {
         if isPlaying {
-            audioPlayer?.pause()
-            stopTimer()
+            player?.pause()
         } else {
-            audioPlayer?.play()
-            startTimer()
+            player?.play()
         }
         isPlaying.toggle()
     }
-
-    private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            if let player = audioPlayer {
-                playbackTime = player.currentTime
-                if !player.isPlaying {
-                    isPlaying = false
-                    stopTimer()
-                }
-            }
-        }
-    }
-
-    private func stopTimer() {
-        timer?.invalidate()
-        timer = nil
-    }
-
+    
     private func formatTime(_ time: Double) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%02d:%02d", minutes, seconds)
-    }
-    
-    private func getDocumentsDirectory() -> URL {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
     }
 }

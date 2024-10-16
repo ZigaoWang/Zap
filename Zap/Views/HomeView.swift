@@ -29,29 +29,6 @@ struct HomeView: View {
                     
                     ForEach(viewModel.notes) { note in
                         NoteRowView(note: note)
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    withAnimation {
-                                        if let index = viewModel.notes.firstIndex(where: { $0.id == note.id }) {
-                                            viewModel.deleteNotes(at: IndexSet(integer: index))
-                                            HapticManager.shared.impact(.rigid)
-                                        }
-                                    }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button {
-                                    withAnimation {
-                                        viewModel.toggleNoteCompletion(note)
-                                        HapticManager.shared.impact(.light)
-                                    }
-                                } label: {
-                                    Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
-                                }
-                                .tint(note.isCompleted ? .orange : .green)
-                            }
                     }
                 }
                 .listStyle(InsetGroupedListStyle())
@@ -62,30 +39,22 @@ struct HomeView: View {
                 }) {
                     HStack {
                         Image(systemName: "wand.and.stars")
-                        Text("Magically Summarize")
+                        Text(viewModel.isSummarizing ? "Generating Summary..." : "Magic Summary")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.purple)
+                    .background(viewModel.isSummarizing ? Color.gray : Color.purple)
                     .foregroundColor(.white)
                     .cornerRadius(10)
                 }
-                .padding()
                 .disabled(viewModel.isSummarizing)
-                .overlay(
-                    Group {
-                        if viewModel.isSummarizing {
-                            HStack {
-                                ProgressView()
-                                Text("Generating summary...")
-                            }
-                            .padding()
-                            .background(Color.black.opacity(0.7))
-                            .foregroundColor(.white)
-                            .cornerRadius(10)
-                        }
-                    }
-                )
+                .padding()
+
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                }
 
                 // Zap buttons
                 HStack(spacing: 15) {
@@ -97,10 +66,8 @@ struct HomeView: View {
                               color: viewModel.isRecording ? .red : .green) {
                         if viewModel.isRecording {
                             viewModel.stopRecording()
-                            HapticManager.shared.notification(.success)
                         } else {
                             viewModel.startRecording()
-                            HapticManager.shared.impact(.heavy)
                         }
                     }
                     zapButton(title: "Camera", icon: "camera", color: .orange) {

@@ -25,36 +25,28 @@ class AIManager {
     
     func summarizeNotes(_ notes: [NoteItem]) async throws -> String {
         var messages: [[String: Any]] = [
-            ["role": "system", "content": "You are a helpful assistant that summarizes notes, including descriptions of images."]
+            ["role": "system", "content": "简明扼要地总结以下笔记。请使用与输入相同的语言回复。"]
         ]
         
-        for (index, note) in notes.enumerated() {
+        for note in notes {
             switch note.type {
             case .text(let content):
                 messages.append(["role": "user", "content": content])
-                print("Added text note \(index): \(content)")
             case .photo(let fileName):
                 if let image = loadImage(fileName: fileName),
                    let description = try await analyzeImage(image) {
-                    messages.append(["role": "user", "content": "Image description: \(description)"])
-                    print("Added image note \(index): \(fileName) with description")
-                } else {
-                    print("Failed to process image note \(index): \(fileName)")
+                    messages.append(["role": "user", "content": "图片: \(description)"])
                 }
             case .video(let fileName, _):
-                messages.append(["role": "user", "content": "Video: \(fileName)"])
-                print("Added video note \(index): \(fileName)")
+                messages.append(["role": "user", "content": "视频: \(fileName)"])
             case .audio(_, _):
                 if let transcription = note.transcription {
-                    messages.append(["role": "user", "content": "Audio transcription: \(transcription)"])
-                    print("Added audio note \(index) with transcription")
-                } else {
-                    print("Audio note \(index) has no transcription")
+                    messages.append(["role": "user", "content": "音频: \(transcription)"])
                 }
             }
         }
         
-        messages.append(["role": "user", "content": "Please summarize all the notes, including descriptions of images."])
+        messages.append(["role": "user", "content": "请简要总结这些笔记的主要内容。"])
         
         return try await sendSummarizationRequest(messages: messages)
     }
