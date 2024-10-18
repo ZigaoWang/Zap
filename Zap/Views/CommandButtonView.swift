@@ -83,10 +83,10 @@ struct CommandButton: View {
     private func sectionView(for mode: InputMode) -> some View {
         let angle: Angle
         switch mode {
-        case .text: angle = .degrees(45)
-        case .photo: angle = .degrees(225)  // Swapped with album
-        case .video: angle = .degrees(135)
-        case .album: angle = .degrees(-45)  // Swapped with photo
+        case .album: angle = .degrees(45)
+        case .video: angle = .degrees(-45)
+        case .photo: angle = .degrees(135)
+        case .text: angle = .degrees(225)
         default: angle = .degrees(0)
         }
         
@@ -120,13 +120,13 @@ struct CommandButton: View {
         
         switch angle {
         case -45..<45:
-            newMode = .album
-        case 45..<135:
             newMode = .video
+        case 45..<135:
+            newMode = .album
         case -135..<(-45):
-            newMode = .photo
-        case -180..<(-135), 135...180:
             newMode = .text
+        case -180..<(-135), 135...180:
+            newMode = .photo
         default:
             newMode = .center
         }

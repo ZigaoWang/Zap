@@ -25,7 +25,7 @@ class NotesViewModel: ObservableObject {
     @Published var showingVideoRecorder = false
     
     private var audioRecorder: AVAudioRecorder?
-    private var currentAudioURL: URL?
+    private var audioFileURL: URL?
     private let supportedLocales: [Locale] = [
         Locale(identifier: "en-US"),
         Locale(identifier: "zh-Hans")
@@ -99,8 +99,8 @@ class NotesViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
-        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let audioFilename = documentsPath.appendingPathComponent("\(Date().timeIntervalSince1970).m4a")
+        let audioFilename = getDocumentsDirectory().appendingPathComponent("\(UUID().uuidString).m4a")
+        audioFileURL = audioFilename
         
         let settings = [
             AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
@@ -120,17 +120,16 @@ class NotesViewModel: ObservableObject {
     
     func stopRecording() {
         audioRecorder?.stop()
-        audioRecorder = nil
         isRecording = false
         
-        if let audioURL = currentAudioURL {
-            let newNote = NoteItem(type: .audio(audioURL.lastPathComponent, 0)) // You may want to calculate the actual duration
-            notes.insert(newNote, at: 0)
-            saveNotes()
+        if let audioURL = audioFileURL {
+            let asset = AVAsset(url: audioURL)
+            let duration = asset.duration.seconds
+            addAudioNote(fileName: audioURL.lastPathComponent, duration: duration)
         }
         
-        currentAudioURL = nil
-        print("Recording stopped and saved")
+        audioRecorder = nil
+        audioFileURL = nil
     }
     
     // MARK: - Transcription
