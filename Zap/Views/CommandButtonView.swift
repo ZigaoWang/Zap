@@ -11,10 +11,13 @@ import AVFoundation
 struct CommandButton: View {
     @ObservedObject var viewModel: NotesViewModel
     @State private var currentMode: InputMode = .center
+    @State private var dragOffset: CGSize = .zero
+    @State private var isDragging = false
     
     private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
     private let buttonSize: CGFloat = 80
     private let outerCircleSize: CGFloat = 240
+    private let maxDragDistance: CGFloat = 60
     
     enum InputMode: String, CaseIterable {
         case center = "mic"
@@ -54,7 +57,7 @@ struct CommandButton: View {
             .font(.caption)
             .foregroundColor(.white)
             
-            // Center button
+            // Center button with joystick movement
             Circle()
                 .fill(viewModel.isRecording ? Color.red : Color.blue)
                 .frame(width: buttonSize, height: buttonSize)
@@ -63,21 +66,32 @@ struct CommandButton: View {
                         .foregroundColor(.white)
                         .font(.system(size: 30))
                 )
+                .offset(dragOffset)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dragOffset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            updateJoystickPosition(value: value)
+                        }
+                        .onEnded { _ in
+                            resetJoystickPosition()
+                        }
+                )
                 .onTapGesture {
                     toggleRecording()
                 }
+            
+            // Add a subtle glow effect
+            Circle()
+                .fill(currentMode.color)
+                .frame(width: buttonSize * 1.2, height: buttonSize * 1.2)
+                .blur(radius: 20)
+                .opacity(isDragging ? 0.3 : 0)
+                .offset(dragOffset)
+                .animation(.easeInOut(duration: 0.2), value: isDragging)
         }
         .frame(width: outerCircleSize, height: outerCircleSize)
         .clipShape(Circle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    updateMode(for: value.location)
-                }
-                .onEnded { _ in
-                    executeAction()
-                }
-        )
     }
     
     private func sectionView(for mode: InputMode) -> some View {
@@ -103,6 +117,26 @@ struct CommandButton: View {
         .fill(mode.color)
         .opacity(currentMode == mode ? 0.8 : 0.3)
         .rotationEffect(angle)
+    }
+    
+    private func updateJoystickPosition(value: DragGesture.Value) {
+        let dragVector = CGSize(
+            width: min(max(value.translation.width, -maxDragDistance), maxDragDistance),
+            height: min(max(value.translation.height, -maxDragDistance), maxDragDistance)
+        )
+        dragOffset = dragVector
+        isDragging = true
+        
+        updateMode(for: CGPoint(x: outerCircleSize / 2 + dragVector.width,
+                                y: outerCircleSize / 2 + dragVector.height))
+    }
+    
+    private func resetJoystickPosition() {
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            dragOffset = .zero
+            isDragging = false
+        }
+        executeAction()
     }
     
     private func updateMode(for location: CGPoint) {
@@ -133,7 +167,7 @@ struct CommandButton: View {
         
         if newMode != currentMode {
             currentMode = newMode
-            hapticImpact.impactOccurred()
+            hapticImpact.impactOccurred(intensity: 0.7)
         }
     }
     
