@@ -53,7 +53,7 @@ struct HomeView: View {
                 CommandButton(viewModel: viewModel)
                     .padding()
             }
-            .navigationTitle("Zap")
+            .navigationTitle("Zap Notes")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
