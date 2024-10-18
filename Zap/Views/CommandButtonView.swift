@@ -20,11 +20,11 @@ struct CommandButton: View {
     private let maxDragDistance: CGFloat = 60
     
     enum InputMode: String, CaseIterable {
-        case center = "mic"
-        case text = "text.justify"
-        case photo = "camera"
-        case video = "video"
-        case album = "photo.on.rectangle"
+        case center = "mic.circle.fill"
+        case text = "text.bubble.fill"
+        case photo = "camera.fill"
+        case video = "video.fill"
+        case album = "photo.on.rectangle.fill"
         
         var color: Color {
             switch self {
@@ -39,32 +39,23 @@ struct CommandButton: View {
     
     var body: some View {
         ZStack {
-            // Full windmill-shaped colored sections
+            Circle()
+                .fill(Color.secondary.opacity(0.2))
+                .frame(width: outerCircleSize, height: outerCircleSize)
+            
+            // 图标
             ForEach(InputMode.allCases.filter { $0 != .center }, id: \.self) { mode in
-                sectionView(for: mode)
+                sectionIcon(for: mode)
             }
             
-            // Section labels
-            VStack {
-                Text("Text").offset(y: -outerCircleSize/3)
-                HStack {
-                    Text("Photo").offset(x: -outerCircleSize/3)
-                    Spacer()
-                    Text("Video").offset(x: outerCircleSize/3)
-                }
-                Text("Album").offset(y: outerCircleSize/3)
-            }
-            .font(.caption)
-            .foregroundColor(.white)
-            
-            // Center button with joystick movement
+            // 中心按钮
             Circle()
                 .fill(viewModel.isRecording ? Color.red : Color.blue)
                 .frame(width: buttonSize, height: buttonSize)
                 .overlay(
-                    Image(systemName: viewModel.isRecording ? "stop.circle" : "mic")
+                    Image(systemName: viewModel.isRecording ? "stop.circle" : "mic.circle.fill")
                         .foregroundColor(.white)
-                        .font(.system(size: 30))
+                        .font(.system(size: 40))
                 )
                 .offset(dragOffset)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dragOffset)
@@ -81,7 +72,7 @@ struct CommandButton: View {
                     toggleRecording()
                 }
             
-            // Add a subtle glow effect
+            // 发光效果
             Circle()
                 .fill(currentMode.color)
                 .frame(width: buttonSize * 1.2, height: buttonSize * 1.2)
@@ -91,32 +82,28 @@ struct CommandButton: View {
                 .animation(.easeInOut(duration: 0.2), value: isDragging)
         }
         .frame(width: outerCircleSize, height: outerCircleSize)
-        .clipShape(Circle())
     }
     
-    private func sectionView(for mode: InputMode) -> some View {
-        let angle: Angle
+    private func sectionIcon(for mode: InputMode) -> some View {
+        let angle: Double
         switch mode {
-        case .album: angle = .degrees(45)
-        case .video: angle = .degrees(-45)
-        case .photo: angle = .degrees(135)
-        case .text: angle = .degrees(225)
-        default: angle = .degrees(0)
+        case .text: angle = -90
+        case .photo: angle = 180
+        case .video: angle = 0
+        case .album: angle = 90
+        default: angle = 0
         }
         
-        return Path { path in
-            path.move(to: CGPoint(x: outerCircleSize / 2, y: outerCircleSize / 2))
-            path.addLine(to: CGPoint(x: outerCircleSize, y: outerCircleSize / 2))
-            path.addArc(center: CGPoint(x: outerCircleSize / 2, y: outerCircleSize / 2),
-                        radius: outerCircleSize / 2,
-                        startAngle: .degrees(0),
-                        endAngle: .degrees(90),
-                        clockwise: false)
-            path.closeSubpath()
-        }
-        .fill(mode.color)
-        .opacity(currentMode == mode ? 0.8 : 0.3)
-        .rotationEffect(angle)
+        return Image(systemName: mode.rawValue)
+            .font(.system(size: 24, weight: .regular))
+            .foregroundColor(currentMode == mode ? mode.color : .secondary)
+            .offset(x: cos(angle * .pi / 180) * outerCircleSize / 2.8,
+                    y: sin(angle * .pi / 180) * outerCircleSize / 2.8)
+            .background(
+                Circle()
+                    .fill(Color.white.opacity(0.1))
+                    .frame(width: 50, height: 50)
+            )
     }
     
     private func updateJoystickPosition(value: DragGesture.Value) {
