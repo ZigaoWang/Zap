@@ -15,9 +15,9 @@ struct CommandButton: View {
     @State private var isDragging = false
     
     private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
-    private let buttonSize: CGFloat = 80
-    private let outerCircleSize: CGFloat = 240
-    private let maxDragDistance: CGFloat = 60
+    private let buttonSize: CGFloat = 60
+    private let outerCircleSize: CGFloat = 200
+    private let maxDragDistance: CGFloat = 50
     
     enum InputMode: String, CaseIterable {
         case center = "mic.circle.fill"
@@ -50,12 +50,12 @@ struct CommandButton: View {
             
             // 中心按钮
             Circle()
-                .fill(viewModel.isRecording ? Color.red : Color.blue)
+                .fill(viewModel.isRecording ? Color.red : currentMode.color)
                 .frame(width: buttonSize, height: buttonSize)
                 .overlay(
-                    Image(systemName: viewModel.isRecording ? "stop.circle" : "mic.circle.fill")
+                    Image(systemName: viewModel.isRecording ? "stop.circle" : currentMode.rawValue)
                         .foregroundColor(.white)
-                        .font(.system(size: 40))
+                        .font(.system(size: 30))
                 )
                 .offset(dragOffset)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dragOffset)
