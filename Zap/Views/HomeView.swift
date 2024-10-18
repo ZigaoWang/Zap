@@ -6,14 +6,12 @@
 //
 
 import SwiftUI
+import AVFoundation
 
 struct HomeView: View {
-    @EnvironmentObject var viewModel: NotesViewModel
+    @StateObject var viewModel = NotesViewModel()
     @EnvironmentObject var appearanceManager: AppearanceManager
-    @State private var showingTextNote = false
     @State private var showingSettings = false
-    @State private var showingImagePicker = false
-    @State private var imageSource: UIImagePickerController.SourceType = .photoLibrary
 
     var body: some View {
         NavigationView {
@@ -30,6 +28,7 @@ struct HomeView: View {
                     ForEach(viewModel.notes) { note in
                         NoteRowView(note: note)
                     }
+                    .onDelete(perform: viewModel.deleteNotes)
                 }
                 .listStyle(InsetGroupedListStyle())
 
@@ -50,36 +49,9 @@ struct HomeView: View {
                 .disabled(viewModel.isSummarizing)
                 .padding()
 
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-
-                // Zap buttons
-                HStack(spacing: 15) {
-                    zapButton(title: "Text", icon: "text.justify", color: .blue) {
-                        showingTextNote = true
-                    }
-                    zapButton(title: viewModel.isRecording ? "Stop" : "Audio",
-                              icon: viewModel.isRecording ? "stop.circle" : "mic",
-                              color: viewModel.isRecording ? .red : .green) {
-                        if viewModel.isRecording {
-                            viewModel.stopRecording()
-                        } else {
-                            viewModel.startRecording()
-                        }
-                    }
-                    zapButton(title: "Camera", icon: "camera", color: .orange) {
-                        imageSource = .camera
-                        showingImagePicker = true
-                    }
-                    zapButton(title: "Album", icon: "photo", color: .purple) {
-                        imageSource = .photoLibrary
-                        showingImagePicker = true
-                    }
-                }
-                .padding()
+                // Command button
+                CommandButton(viewModel: viewModel)
+                    .padding()
             }
             .navigationTitle("Zap")
             .toolbar {
@@ -94,47 +66,52 @@ struct HomeView: View {
         }
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
-        .sheet(isPresented: $showingTextNote) {
-            TextNoteView().environmentObject(viewModel)
-        }
         .sheet(isPresented: $showingSettings) {
             SettingsView().environmentObject(appearanceManager)
         }
-        .sheet(isPresented: $showingImagePicker) {
-            ImagePicker(sourceType: imageSource)
+        .sheet(isPresented: $viewModel.showingTextInput) {
+            TextInputView(content: $viewModel.textInputContent, onSave: {
+                viewModel.addTextNote(viewModel.textInputContent)
+                viewModel.textInputContent = ""
+                viewModel.showingTextInput = false
+            })
         }
-    }
-
-    private func zapButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            VStack {
-                Image(systemName: icon)
-                    .font(.system(size: 24))
-                Text(title)
-                    .font(.caption)
+        .sheet(isPresented: $viewModel.showingImagePicker) {
+            ImagePicker(sourceType: .photoLibrary) { image in
+                viewModel.handleCapturedImage(image)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(color)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+        }
+        .sheet(isPresented: $viewModel.showingCamera) {
+            ImagePicker(sourceType: .camera) { image in
+                viewModel.handleCapturedImage(image)
+            }
+        }
+        .sheet(isPresented: $viewModel.showingVideoRecorder) {
+            VideoPicker { videoURL in
+                viewModel.handleCapturedVideo(videoURL)
+            }
         }
     }
 }
 
-// HapticManager to centralize haptic feedback
-class HapticManager {
-    static let shared = HapticManager()
+struct TextInputView: View {
+    @Binding var content: String
+    let onSave: () -> Void
     
-    private init() {}
-    
-    func impact(_ style: UIImpactFeedbackGenerator.FeedbackStyle) {
-        let generator = UIImpactFeedbackGenerator(style: style)
-        generator.impactOccurred()
-    }
-    
-    func notification(_ type: UINotificationFeedbackGenerator.FeedbackType) {
-        let generator = UINotificationFeedbackGenerator()
-        generator.notificationOccurred(type)
+    var body: some View {
+        NavigationView {
+            TextEditor(text: $content)
+                .padding()
+                .navigationTitle("New Note")
+                .navigationBarItems(
+                    leading: Button("Cancel") {
+                        content = ""
+                        onSave()
+                    },
+                    trailing: Button("Save") {
+                        onSave()
+                    }
+                )
+        }
     }
 }

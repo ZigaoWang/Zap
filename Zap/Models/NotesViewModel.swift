@@ -9,6 +9,8 @@ import SwiftUI
 import AVFoundation
 import Speech
 import NaturalLanguage
+import Photos
+import Foundation
 
 class NotesViewModel: ObservableObject {
     @Published var notes: [NoteItem] = []
@@ -16,8 +18,14 @@ class NotesViewModel: ObservableObject {
     @Published var isSummarizing = false
     @Published var summary: String = ""
     @Published var errorMessage: String? = nil
+    @Published var showingTextInput = false
+    @Published var textInputContent = ""
+    @Published var showingImagePicker = false
+    @Published var showingCamera = false
+    @Published var showingVideoRecorder = false
     
     private var audioRecorder: AVAudioRecorder?
+    private var currentAudioURL: URL?
     private let supportedLocales: [Locale] = [
         Locale(identifier: "en-US"),
         Locale(identifier: "zh-Hans")
@@ -25,6 +33,17 @@ class NotesViewModel: ObservableObject {
     
     init() {
         loadNotes()
+        setupAudioSession()
+    }
+    
+    private func setupAudioSession() {
+        let audioSession = AVAudioSession.sharedInstance()
+        do {
+            try audioSession.setCategory(.playAndRecord, mode: .default)
+            try audioSession.setActive(true)
+        } catch {
+            print("Failed to set up audio session: \(error)")
+        }
     }
     
     // MARK: - Note Management
@@ -80,27 +99,20 @@ class NotesViewModel: ObservableObject {
     // MARK: - Audio Recording
     
     func startRecording() {
-        let audioSession = AVAudioSession.sharedInstance()
+        let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let audioFilename = documentsPath.appendingPathComponent("\(Date().timeIntervalSince1970).m4a")
+        
+        let settings = [
+            AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
+            AVSampleRateKey: 44100,
+            AVNumberOfChannelsKey: 1,
+            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
+        ]
+        
         do {
-            try audioSession.setCategory(.playAndRecord, mode: .default)
-            try audioSession.setActive(true)
-            
-            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-            let audioFilename = documentsPath.appendingPathComponent("\(UUID().uuidString).m4a")
-            
-            let settings = [
-                AVFormatIDKey: Int(kAudioFormatMPEG4AAC),
-                AVSampleRateKey: 44100,
-                AVNumberOfChannelsKey: 2,
-                AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue
-            ]
-            
             audioRecorder = try AVAudioRecorder(url: audioFilename, settings: settings)
             audioRecorder?.record()
-            
-            DispatchQueue.main.async {
-                self.isRecording = true
-            }
+            isRecording = true
         } catch {
             print("Could not start recording: \(error)")
         }
@@ -108,16 +120,17 @@ class NotesViewModel: ObservableObject {
     
     func stopRecording() {
         audioRecorder?.stop()
+        audioRecorder = nil
+        isRecording = false
         
-        DispatchQueue.main.async {
-            self.isRecording = false
-            if let recorder = self.audioRecorder {
-                let audioFilename = recorder.url.lastPathComponent
-                let duration = recorder.currentTime
-                self.addAudioNote(fileName: audioFilename, duration: duration)
-            }
-            self.audioRecorder = nil
+        if let audioURL = currentAudioURL {
+            let newNote = NoteItem(type: .audio(audioURL.lastPathComponent, 0)) // You may want to calculate the actual duration
+            notes.insert(newNote, at: 0)
+            saveNotes()
         }
+        
+        currentAudioURL = nil
+        print("Recording stopped and saved")
     }
     
     // MARK: - Transcription
@@ -225,5 +238,40 @@ class NotesViewModel: ObservableObject {
     func deleteNote(_ note: NoteItem) {
         notes.removeAll { $0.id == note.id }
         saveNotes()
+    }
+    
+    func capturePhoto() {
+        showingCamera = true
+    }
+    
+    func captureVideo() {
+        showingVideoRecorder = true
+    }
+    
+    func showTextNoteInput() {
+        showingTextInput = true
+    }
+    
+    func showImagePicker() {
+        showingImagePicker = true
+    }
+    
+    func handleCapturedImage(_ image: UIImage) {
+        if let data = image.jpegData(compressionQuality: 0.8) {
+            let fileName = UUID().uuidString + ".jpg"
+            let fileURL = getDocumentsDirectory().appendingPathComponent(fileName)
+            try? data.write(to: fileURL)
+            addPhotoNote(fileName: fileName)
+        }
+    }
+    
+    func handleCapturedVideo(_ videoURL: URL) {
+        let fileName = UUID().uuidString + ".mov"
+        let destinationURL = getDocumentsDirectory().appendingPathComponent(fileName)
+        try? FileManager.default.copyItem(at: videoURL, to: destinationURL)
+        
+        let asset = AVAsset(url: videoURL)
+        let duration = asset.duration.seconds
+        addVideoNote(fileName: fileName, duration: duration)
     }
 }
