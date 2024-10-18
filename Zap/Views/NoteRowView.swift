@@ -20,16 +20,9 @@ struct NoteRowView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 15) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0)) {
-                        viewModel.toggleNoteCompletion(note)
-                    }
-                }) {
-                    Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 24))
-                        .foregroundColor(note.isCompleted ? appearanceManager.accentColor : .gray)
-                }
-                .buttonStyle(PlainButtonStyle())
+                Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 24))
+                    .foregroundColor(note.isCompleted ? appearanceManager.accentColor : .gray)
                 
                 VStack(alignment: .leading, spacing: 5) {
                     HStack {
@@ -53,23 +46,11 @@ struct NoteRowView: View {
                     Group {
                         switch note.type {
                         case .text(let content):
-                            if isEditing {
-                                TextEditor(text: $editedContent)
-                                    .frame(height: 100)
-                                    .border(Color.gray, width: 1)
-                            } else {
-                                Text(content)
-                            }
+                            Text(content)
                         case .audio(let fileName, let duration):
                             AudioPlayerInlineView(note: note)
                             if let transcription = note.transcription {
-                                if isEditing {
-                                    TextEditor(text: $editedContent)
-                                        .frame(height: 100)
-                                        .border(Color.gray, width: 1)
-                                } else {
-                                    Text(transcription)
-                                }
+                                Text(transcription)
                             }
                         case .photo(let fileName):
                             ImagePreviewView(fileName: fileName)
@@ -87,13 +68,19 @@ struct NoteRowView: View {
             }
             
             if isEditing {
-                HStack {
-                    Spacer()
-                    Button("Save") {
-                        saveEdits()
-                        isEditing = false
+                VStack {
+                    TextEditor(text: $editedContent)
+                        .frame(height: 100)
+                        .border(Color.gray, width: 1)
+                    
+                    HStack {
+                        Spacer()
+                        Button("Save") {
+                            saveEdits()
+                            isEditing = false
+                        }
+                        .foregroundColor(.blue)
                     }
-                    .foregroundColor(.blue)
                 }
                 .padding(.top, 4)
                 .transition(.opacity)
@@ -106,6 +93,21 @@ struct NoteRowView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
+        .swipeActions(edge: .leading) {
+            Button {
+                viewModel.toggleNoteCompletion(note)
+            } label: {
+                Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
+            }
+            .tint(note.isCompleted ? .orange : .green)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.deleteNote(note)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
     }
     
