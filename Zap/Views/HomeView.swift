@@ -83,6 +83,23 @@ struct HomeView: View {
                 .disabled(viewModel.isSummarizing)
                 .padding()
 
+                // Organize and Plan button
+                Button(action: {
+                    viewModel.organizeAndPlanNotes()
+                }) {
+                    HStack {
+                        Image(systemName: "wand.and.stars")
+                        Text(viewModel.isSummarizing ? "Organizing..." : "Organize & Plan")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(viewModel.isSummarizing ? Color.gray : Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .disabled(viewModel.isSummarizing)
+                .padding()
+
                 // Command button
                 CommandButton(viewModel: viewModel)
                     .padding()
