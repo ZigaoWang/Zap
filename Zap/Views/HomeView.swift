@@ -16,29 +16,33 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Notes list
-                List {
-                    if !viewModel.summary.isEmpty {
-                        Section(header: Text("Summary")) {
-                            Text(viewModel.summary)
-                                .font(.subheadline)
+                if viewModel.notes.isEmpty {
+                    Text("No notes available")
+                        .foregroundColor(.secondary)
+                        .padding()
+                } else {
+                    List {
+                        ForEach(viewModel.notes) { note in
+                            NoteRowView(note: note)
                         }
+                        .onDelete(perform: viewModel.deleteNotes)
                     }
-                    
-                    ForEach(viewModel.notes) { note in
-                        NoteRowView(note: note)
-                    }
-                    .onDelete(perform: viewModel.deleteNotes)
+                    .listStyle(InsetGroupedListStyle())
                 }
-                .listStyle(InsetGroupedListStyle())
 
-                // Summarize button
+                if let errorMessage = viewModel.errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .padding()
+                }
+
+                // Organize and Plan button
                 Button(action: {
-                    viewModel.summarizeNotes()
+                    viewModel.organizeAndPlanNotes()
                 }) {
                     HStack {
                         Image(systemName: "wand.and.stars")
-                        Text(viewModel.isSummarizing ? "Generating Summary..." : "Magic Summary")
+                        Text(viewModel.isSummarizing ? "Organizing..." : "Organize & Plan")
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
@@ -67,31 +71,6 @@ struct HomeView: View {
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
         .environmentObject(viewModel)
-        .sheet(isPresented: $showingSettings) {
-            SettingsView().environmentObject(appearanceManager)
-        }
-        .sheet(isPresented: $viewModel.showingTextInput) {
-            TextInputView(content: $viewModel.textInputContent, onSave: {
-                viewModel.addTextNote(viewModel.textInputContent)
-                viewModel.textInputContent = ""
-                viewModel.showingTextInput = false
-            })
-        }
-        .sheet(isPresented: $viewModel.showingImagePicker) {
-            ImagePicker(sourceType: .photoLibrary) { image in
-                viewModel.handleCapturedImage(image)
-            }
-        }
-        .sheet(isPresented: $viewModel.showingCamera) {
-            ImagePicker(sourceType: .camera) { image in
-                viewModel.handleCapturedImage(image)
-            }
-        }
-        .sheet(isPresented: $viewModel.showingVideoRecorder) {
-            VideoPicker { videoURL in
-                viewModel.handleCapturedVideo(videoURL)
-            }
-        }
     }
 }
 

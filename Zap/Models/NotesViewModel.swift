@@ -272,4 +272,30 @@ class NotesViewModel: ObservableObject {
         let duration = asset.duration.seconds
         addVideoNote(fileName: fileName, duration: duration)
     }
+    
+    func organizeAndPlanNotes() {
+        isSummarizing = true
+        errorMessage = nil
+        Task {
+            do {
+                let organizedNotes = try await AIManager.shared.organizeAndPlanNotes(notes)
+                DispatchQueue.main.async {
+                    if organizedNotes.isEmpty {
+                        self.errorMessage = "Unable to organize notes. Please try again."
+                    } else {
+                        self.notes = organizedNotes
+                        self.saveNotes()
+                    }
+                    self.isSummarizing = false
+                    print("Organized notes count: \(self.notes.count)")
+                }
+            } catch {
+                print("Error organizing notes: \(error)")
+                DispatchQueue.main.async {
+                    self.errorMessage = "An error occurred while organizing notes. Please try again."
+                    self.isSummarizing = false
+                }
+            }
+        }
+    }
 }
