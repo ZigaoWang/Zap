@@ -53,7 +53,7 @@ struct HomeView: View {
                 .disabled(viewModel.isSummarizing)
                 .padding()
 
-                // Command button
+                // Command button (joystick)
                 CommandButton(viewModel: viewModel)
                     .padding()
             }
@@ -71,6 +71,31 @@ struct HomeView: View {
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
         .environmentObject(viewModel)
+        .sheet(isPresented: $showingSettings) {
+            SettingsView().environmentObject(appearanceManager)
+        }
+        .sheet(isPresented: $viewModel.showingTextInput) {
+            TextInputView(content: $viewModel.textInputContent, onSave: {
+                viewModel.addTextNote(viewModel.textInputContent)
+                viewModel.textInputContent = ""
+                viewModel.showingTextInput = false
+            })
+        }
+        .sheet(isPresented: $viewModel.showingImagePicker) {
+            ImagePicker(sourceType: .photoLibrary) { image in
+                viewModel.handleCapturedImage(image)
+            }
+        }
+        .sheet(isPresented: $viewModel.showingCamera) {
+            ImagePicker(sourceType: .camera) { image in
+                viewModel.handleCapturedImage(image)
+            }
+        }
+        .sheet(isPresented: $viewModel.showingVideoRecorder) {
+            VideoPicker { videoURL in
+                viewModel.handleCapturedVideo(videoURL)
+            }
+        }
     }
 }
 
