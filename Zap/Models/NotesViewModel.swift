@@ -233,7 +233,6 @@ class NotesViewModel: ObservableObject {
         }
     }
     
-    // Add this function to the NotesViewModel class
     func deleteNote(_ note: NoteItem) {
         notes.removeAll { $0.id == note.id }
         saveNotes()
