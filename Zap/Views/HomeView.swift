@@ -17,25 +17,6 @@ struct HomeView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                if viewModel.notes.isEmpty {
-                    Text("No notes available")
-                        .foregroundColor(.secondary)
-                        .padding()
-                } else {
-                    List {
-                        ForEach(viewModel.notes) { note in
-                            NoteRowView(note: note)
-                        }
-                        .onDelete(perform: viewModel.deleteNotes)
-                    }
-                    .listStyle(InsetGroupedListStyle())
-                }
-
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
                 // Notes list
                 List {
                     if !viewModel.summary.isEmpty {
