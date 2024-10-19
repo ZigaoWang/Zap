@@ -67,6 +67,9 @@ struct HomeView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView()
+            }
         }
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
