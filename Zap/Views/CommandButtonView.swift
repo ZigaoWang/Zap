@@ -45,10 +45,12 @@ struct CommandButton: View {
                 .fill(Color.secondary.opacity(0.2))
                 .frame(width: outerCircleSize, height: outerCircleSize)
             
+            // 图标
             ForEach(InputMode.allCases.filter { $0 != .center }, id: \.self) { mode in
                 sectionIcon(for: mode)
             }
             
+            // 中心按钮
             Circle()
                 .fill(viewModel.isRecording ? Color.red : currentMode.color)
                 .frame(width: buttonSize, height: buttonSize)
@@ -58,6 +60,7 @@ struct CommandButton: View {
                         .font(.system(size: 30))
                 )
                 .offset(dragOffset)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dragOffset)
                 .gesture(
                     DragGesture()
                         .onChanged { value in
@@ -68,19 +71,17 @@ struct CommandButton: View {
                         }
                 )
                 .onTapGesture {
-                    if currentMode == .center {
-                        toggleRecording()
-                    } else {
-                        executeAction()
-                    }
+                    toggleRecording()
                 }
             
+            // 发光效果
             Circle()
                 .fill(currentMode.color)
                 .frame(width: buttonSize * 1.2, height: buttonSize * 1.2)
                 .blur(radius: 20)
                 .opacity(isDragging ? 0.3 : 0)
                 .offset(dragOffset)
+                .animation(.easeInOut(duration: 0.2), value: isDragging)
         }
         .frame(width: outerCircleSize, height: outerCircleSize)
     }
@@ -113,13 +114,15 @@ struct CommandButton: View {
             height: min(max(value.translation.height, -maxDragDistance), maxDragDistance)
         )
         
+        // Add continuous haptic feedback during dragging
+        let dragIntensity = sqrt(dragVector.width * dragVector.width + dragVector.height * dragVector.height) / maxDragDistance
+        hapticImpact.impactOccurred(intensity: dragIntensity)
+        
         dragOffset = dragVector
         isDragging = true
         
         updateMode(for: CGPoint(x: outerCircleSize / 2 + dragVector.width,
                                 y: outerCircleSize / 2 + dragVector.height))
-        
-        hapticImpact.impactOccurred(intensity: Double(dragVector.height + dragVector.width) / (maxDragDistance * 2))
     }
     
     private func resetJoystickPosition() {
@@ -128,13 +131,10 @@ struct CommandButton: View {
             isDragging = false
         }
         
+        // Add haptic feedback when returning to center
         hapticNotification.notificationOccurred(.success)
         
-        if currentMode != .center {
-            executeAction()
-        }
-        
-        currentMode = .center
+        executeAction()
     }
     
     private func updateMode(for location: CGPoint) {
@@ -183,7 +183,7 @@ struct CommandButton: View {
             break
         }
         
-        hapticSelection.selectionChanged()
+        currentMode = .center
     }
     
     private func toggleRecording() {
