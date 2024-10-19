@@ -12,7 +12,6 @@ struct HomeView: View {
     @StateObject var viewModel = NotesViewModel()
     @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var showingSettings = false
-    @State private var isOrganizing = false
 
     var body: some View {
         NavigationView {
@@ -37,6 +36,23 @@ struct HomeView: View {
                         .padding()
                 }
 
+                // Organize and Plan button
+                Button(action: {
+                    viewModel.organizeAndPlanNotes()
+                }) {
+                    HStack {
+                        Image(systemName: "wand.and.stars")
+                        Text(viewModel.isSummarizing ? "Organizing..." : "Organize & Plan")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(viewModel.isSummarizing ? Color.gray : Color.purple)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                }
+                .disabled(viewModel.isSummarizing)
+                .padding()
+
                 // Command button
                 CommandButton(viewModel: viewModel)
                     .padding()
@@ -44,41 +60,12 @@ struct HomeView: View {
             .navigationTitle("Zap Notes")
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    HStack {
-                        Button(action: {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.3)) {
-                                isOrganizing = true
-                            }
-                            viewModel.organizeAndPlanNotes()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                withAnimation(.spring(response: 0.6, dampingFraction: 0.7, blendDuration: 0.3)) {
-                                    isOrganizing = false
-                                }
-                            }
-                        }) {
-                            Image(systemName: "wand.and.stars")
-                                .foregroundColor(.white)
-                                .frame(width: 36, height: 36)
-                                .background(
-                                    Circle()
-                                        .fill(viewModel.isSummarizing ? Color.gray : Color.purple)
-                                        .shadow(color: .purple.opacity(0.3), radius: isOrganizing ? 10 : 0, x: 0, y: 0)
-                                )
-                                .scaleEffect(isOrganizing ? 1.1 : 1.0)
-                                .rotationEffect(Angle(degrees: isOrganizing ? 360 : 0))
-                        }
-                        .disabled(viewModel.isSummarizing)
-
-                        Button(action: {
-                            showingSettings = true
-                        }) {
-                            Image(systemName: "gear")
-                        }
+                    Button(action: {
+                        showingSettings = true
+                    }) {
+                        Image(systemName: "gear")
                     }
                 }
-            }
-            .sheet(isPresented: $showingSettings) {
-                SettingsView()
             }
         }
         .accentColor(appearanceManager.accentColor)

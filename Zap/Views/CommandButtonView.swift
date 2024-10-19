@@ -15,8 +15,6 @@ struct CommandButton: View {
     @State private var isDragging = false
     
     private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
-    private let hapticSelection = UISelectionFeedbackGenerator()
-    private let hapticNotification = UINotificationFeedbackGenerator()
     private let buttonSize: CGFloat = 60
     private let outerCircleSize: CGFloat = 200
     private let maxDragDistance: CGFloat = 50
@@ -113,11 +111,6 @@ struct CommandButton: View {
             width: min(max(value.translation.width, -maxDragDistance), maxDragDistance),
             height: min(max(value.translation.height, -maxDragDistance), maxDragDistance)
         )
-        
-        // Add continuous haptic feedback during dragging
-        let dragIntensity = sqrt(dragVector.width * dragVector.width + dragVector.height * dragVector.height) / maxDragDistance
-        hapticImpact.impactOccurred(intensity: dragIntensity)
-        
         dragOffset = dragVector
         isDragging = true
         
@@ -130,10 +123,6 @@ struct CommandButton: View {
             dragOffset = .zero
             isDragging = false
         }
-        
-        // Add haptic feedback when returning to center
-        hapticNotification.notificationOccurred(.success)
-        
         executeAction()
     }
     
@@ -165,7 +154,7 @@ struct CommandButton: View {
         
         if newMode != currentMode {
             currentMode = newMode
-            hapticSelection.selectionChanged()
+            hapticImpact.impactOccurred(intensity: 0.7)
         }
     }
     
