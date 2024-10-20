@@ -83,7 +83,7 @@ struct HomeView: View {
                 .background(Color(.systemBackground))
 
                 // Notes list
-                List {
+                ScrollView {
                     ForEach(filteredNotes) { note in
                         NoteRowView(note: note)
                             .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
@@ -92,9 +92,9 @@ struct HomeView: View {
                 }
                 .listStyle(PlainListStyle())
 
-                // Command button (joystick)
+                // CommandButton in the center bottom
                 CommandButton(viewModel: viewModel)
-                    .padding(.bottom, 8)
+                    .padding(10)
             }
             .navigationBarHidden(true)
         }
