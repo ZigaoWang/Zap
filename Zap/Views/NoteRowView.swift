@@ -16,7 +16,6 @@ struct NoteRowView: View {
     @State private var showFullScreen = false
     @State private var isEditing = false
     @State private var editedContent = ""
-    @State private var showingDeleteAlert = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -30,10 +29,19 @@ struct NoteRowView: View {
                         .foregroundColor(.white)
                     Spacer()
                     editButton
-                    deleteButton
                 }
                 
-                noteContent
+                if isEditing {
+                    TextField("Edit note", text: $editedContent)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .foregroundColor(.black)
+                        .onSubmit {
+                            saveEdits()
+                            isEditing = false
+                        }
+                } else {
+                    noteContent
+                }
             }
         }
         .padding(.vertical, 12)
@@ -42,26 +50,10 @@ struct NoteRowView: View {
         .cornerRadius(16)
         .shadow(color: noteBackgroundColor.opacity(0.3), radius: 5, x: 0, y: 3)
         .opacity(note.isCompleted ? 0.7 : 1)
-        .padding(.horizontal, 16)
         .padding(.vertical, 6)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
-        }
-        .sheet(isPresented: $isEditing) {
-            EditNoteView(note: note) { updatedNote in
-                viewModel.updateNote(updatedNote)
-            }
-        }
-        .alert(isPresented: $showingDeleteAlert) {
-            Alert(
-                title: Text("Delete Note"),
-                message: Text("Are you sure you want to delete this note?"),
-                primaryButton: .destructive(Text("Delete")) {
-                    viewModel.deleteNote(note)
-                },
-                secondaryButton: .cancel()
-            )
         }
         .swipeActions(edge: .leading) {
             Button {
@@ -119,26 +111,20 @@ struct NoteRowView: View {
         Group {
             if isEditable {
                 Button(action: {
-                    isEditing = true
+                    if isEditing {
+                        saveEdits()
+                    } else {
+                        editedContent = contentToEdit
+                    }
+                    isEditing.toggle()
                 }) {
-                    Image(systemName: "pencil")
+                    Image(systemName: isEditing ? "checkmark.circle" : "pencil")
                         .font(.system(size: 16))
                         .foregroundColor(.white)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-    }
-    
-    private var deleteButton: some View {
-        Button(action: {
-            showingDeleteAlert = true
-        }) {
-            Image(systemName: "trash")
-                .font(.system(size: 16))
-                .foregroundColor(.white)
-        }
-        .buttonStyle(PlainButtonStyle())
     }
     
     private var noteContent: some View {
@@ -205,6 +191,14 @@ struct NoteRowView: View {
         }
     }
     
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = .pad
+        return formatter.string(from: duration) ?? "0:00"
+    }
+    
     private func saveEdits() {
         switch note.type {
         case .text:
@@ -214,13 +208,5 @@ struct NoteRowView: View {
         default:
             break
         }
-    }
-    
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.minute, .second]
-        formatter.unitsStyle = .positional
-        formatter.zeroFormattingBehavior = .pad
-        return formatter.string(from: duration) ?? "0:00"
     }
 }
