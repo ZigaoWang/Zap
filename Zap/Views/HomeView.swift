@@ -28,14 +28,17 @@ struct HomeView: View {
                 VStack(spacing: 0) {
                     // Top bar with logo, title, date, and icons
                     HStack {
-                        Image("ZapLogo")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 30, height: 30)
-                            .cornerRadius(6)
+                        HStack(spacing: 8) {
+                            Image("ZapLogo")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 30, height: 30)
+                                .cornerRadius(6)
+                            
+                            Text("Zap Notes")
+                                .font(.title2.bold())
                         
-                        Text("Zap Notes")
-                            .font(.headline)
+                        }
                         
                         Spacer()
                         
