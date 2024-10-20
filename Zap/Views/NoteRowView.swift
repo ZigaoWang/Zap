@@ -33,11 +33,13 @@ struct NoteRowView: View {
                 }
                 
                 if isEditing {
-                    TextEditor(text: $editedContent)
-                        .frame(height: 100)
-                        .padding(4)
-                        .background(Color.white.opacity(0.2))
-                        .cornerRadius(8)
+                    TextField("Edit note", text: $editedContent)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .foregroundColor(.black)
+                        .onSubmit {
+                            saveEdits()
+                            isEditing = false
+                        }
                 } else {
                     noteContent
                 }
@@ -49,11 +51,25 @@ struct NoteRowView: View {
         .cornerRadius(16)
         .shadow(color: noteBackgroundColor.opacity(0.3), radius: 5, x: 0, y: 3)
         .opacity(note.isCompleted ? 0.7 : 1)
-        .padding(.horizontal, 16)
         .padding(.vertical, 6)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
+        .swipeActions(edge: .leading) {
+            Button {
+                viewModel.toggleNoteCompletion(note)
+            } label: {
+                Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
+            }
+            .tint(note.isCompleted ? .orange : .green)
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.deleteNote(note)
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
         }
     }
     
@@ -99,7 +115,7 @@ struct NoteRowView: View {
                     if isEditing {
                         saveEdits()
                     } else {
-                        startEditing()
+                        editedContent = contentToEdit
                     }
                     isEditing.toggle()
                 }) {
@@ -110,17 +126,6 @@ struct NoteRowView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-    }
-    
-    private var deleteButton: some View {
-        Button(action: {
-            viewModel.deleteNote(note)
-        }) {
-            Image(systemName: "trash")
-                .font(.system(size: 16))
-                .foregroundColor(.white)
-        }
-        .buttonStyle(PlainButtonStyle())
     }
     
     private var noteContent: some View {
@@ -187,8 +192,12 @@ struct NoteRowView: View {
         }
     }
     
-    private func startEditing() {
-        editedContent = contentToEdit
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = .pad
+        return formatter.string(from: duration) ?? "0:00"
     }
     
     private func saveEdits() {
@@ -202,11 +211,14 @@ struct NoteRowView: View {
         }
     }
     
-    private func formatDuration(_ duration: TimeInterval) -> String {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.minute, .second]
-        formatter.unitsStyle = .positional
-        formatter.zeroFormattingBehavior = .pad
-        return formatter.string(from: duration) ?? "0:00"
+    private var deleteButton: some View {
+        Button(action: {
+            viewModel.deleteNote(note)
+        }) {
+            Image(systemName: "trash")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }

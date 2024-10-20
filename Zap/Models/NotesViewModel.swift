@@ -23,6 +23,7 @@ class NotesViewModel: ObservableObject {
     @Published var showingImagePicker = false
     @Published var showingCamera = false
     @Published var showingVideoRecorder = false
+    @Published var isOrganizing = false
     
     private var audioRecorder: AVAudioRecorder?
     private var audioFileURL: URL?
@@ -279,28 +280,31 @@ class NotesViewModel: ObservableObject {
     }
     
     func organizeAndPlanNotes() {
-        isSummarizing = true
-        errorMessage = nil
         Task {
             do {
+                self.isOrganizing = true
+                self.errorMessage = nil
                 let organizedNotes = try await AIManager.shared.organizeAndPlanNotes(notes)
-                DispatchQueue.main.async {
-                    if organizedNotes.isEmpty {
-                        self.errorMessage = "Unable to organize notes. Please try again."
-                    } else {
-                        self.notes = organizedNotes
-                        self.saveNotes()
-                    }
-                    self.isSummarizing = false
-                    print("Organized notes count: \(self.notes.count)")
+                await MainActor.run {
+                    let organizedNoteIds = Set(organizedNotes.map { $0.id })
+                    let unorganizedNotes = self.notes.filter { !organizedNoteIds.contains($0.id) }
+                    self.notes = organizedNotes + unorganizedNotes
+                    saveNotes()
+                    self.isOrganizing = false
                 }
             } catch {
-                print("Error organizing notes: \(error)")
-                DispatchQueue.main.async {
-                    self.errorMessage = "An error occurred while organizing notes. Please try again."
-                    self.isSummarizing = false
+                await MainActor.run {
+                    self.errorMessage = "Failed to organize notes: \(error.localizedDescription)"
+                    self.isOrganizing = false
                 }
             }
+        }
+    }
+
+    func updateNote(_ updatedNote: NoteItem) {
+        if let index = notes.firstIndex(where: { $0.id == updatedNote.id }) {
+            notes[index] = updatedNote
+            saveNotes()
         }
     }
 }
