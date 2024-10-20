@@ -99,7 +99,7 @@ struct CommandButton: View {
             .background(
                 Circle()
                     .fill(Color.white.opacity(0.1))
-                    .frame(width: 50, height: 50)
+                    .frame(width: 45, height: 45)
             )
     }
     
@@ -158,7 +158,7 @@ struct CommandButton: View {
     private func executeAction() {
         switch currentMode {
         case .text:
-            viewModel.showTextNoteInput()
+            viewModel.showingTextInput = true
         case .photo:
             viewModel.capturePhoto()
         case .video:

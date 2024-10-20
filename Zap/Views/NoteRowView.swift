@@ -16,6 +16,7 @@ struct NoteRowView: View {
     @State private var showFullScreen = false
     @State private var isEditing = false
     @State private var editedContent = ""
+    @State private var showingDeleteAlert = false
     
     var body: some View {
         HStack(spacing: 12) {
@@ -29,6 +30,7 @@ struct NoteRowView: View {
                         .foregroundColor(.white)
                     Spacer()
                     editButton
+                    deleteButton
                 }
                 
                 noteContent
@@ -45,6 +47,21 @@ struct NoteRowView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
+        }
+        .sheet(isPresented: $isEditing) {
+            EditNoteView(note: note) { updatedNote in
+                viewModel.updateNote(updatedNote)
+            }
+        }
+        .alert(isPresented: $showingDeleteAlert) {
+            Alert(
+                title: Text("Delete Note"),
+                message: Text("Are you sure you want to delete this note?"),
+                primaryButton: .destructive(Text("Delete")) {
+                    viewModel.deleteNote(note)
+                },
+                secondaryButton: .cancel()
+            )
         }
         .swipeActions(edge: .leading) {
             Button {
@@ -102,18 +119,26 @@ struct NoteRowView: View {
         Group {
             if isEditable {
                 Button(action: {
-                    isEditing.toggle()
-                    if isEditing {
-                        editedContent = contentToEdit
-                    }
+                    isEditing = true
                 }) {
-                    Image(systemName: isEditing ? "xmark.circle" : "pencil")
+                    Image(systemName: "pencil")
                         .font(.system(size: 16))
                         .foregroundColor(.white)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
+    }
+    
+    private var deleteButton: some View {
+        Button(action: {
+            showingDeleteAlert = true
+        }) {
+            Image(systemName: "trash")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var noteContent: some View {
