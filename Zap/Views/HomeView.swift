@@ -13,6 +13,7 @@ struct HomeView: View {
     @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var showingSettings = false
     @State private var selectedTab = "All"
+    @State private var isOrganizing = false
     
     let tabs = ["All", "Text", "Audio", "Photo", "Video"]
 
@@ -34,6 +35,18 @@ struct HomeView: View {
                     
                     Text(formattedDate())
                         .font(.subheadline)
+                    
+                    Button(action: {
+                        organizeAndPlanNotes()
+                    }) {
+                        Image(systemName: "wand.and.stars")
+                            .foregroundColor(.white)
+                            .padding(8)
+                            .background(appearanceManager.accentColor)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(isOrganizing)
                     
                     Button(action: {}) {
                         Image(systemName: "magnifyingglass")
@@ -113,6 +126,17 @@ struct HomeView: View {
                 viewModel.handleCapturedVideo(videoURL)
             }
         }
+        .overlay(
+            Group {
+                if isOrganizing {
+                    ProgressView("Organizing notes...")
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(10)
+                        .shadow(radius: 10)
+                }
+            }
+        )
     }
     
     private var filteredNotes: [NoteItem] {
@@ -138,6 +162,25 @@ struct HomeView: View {
         formatter.locale = Locale(identifier: "en_US")
         return formatter.string(from: Date())
     }
+
+    private func organizeAndPlanNotes() {
+        isOrganizing = true
+        Task {
+            do {
+                let organizedNotes = try await AIManager.shared.organizeAndPlanNotes(viewModel.notes)
+                await MainActor.run {
+                    viewModel.notes = organizedNotes + viewModel.notes
+                    isOrganizing = false
+                }
+            } catch {
+                print("Error organizing notes: \(error)")
+                await MainActor.run {
+                    isOrganizing = false
+                    // Here you might want to show an alert to the user
+                }
+            }
+        }
+    }
 }
 
 struct TextInputView: View {
@@ -158,6 +201,24 @@ struct TextInputView: View {
                         onSave()
                     }
                 )
+        }
+    }
+}
+
+struct SummaryView: View {
+    let summary: String
+    @Environment(\.presentationMode) var presentationMode
+
+    var body: some View {
+        NavigationView {
+            ScrollView {
+                Text(summary)
+                    .padding()
+            }
+            .navigationTitle("AI Summary")
+            .navigationBarItems(trailing: Button("Done") {
+                presentationMode.wrappedValue.dismiss()
+            })
         }
     }
 }
