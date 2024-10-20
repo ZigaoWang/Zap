@@ -29,6 +29,7 @@ struct NoteRowView: View {
                         .foregroundColor(.white)
                     Spacer()
                     editButton
+                    deleteButton
                 }
                 
                 if isEditing {
@@ -208,5 +209,16 @@ struct NoteRowView: View {
         default:
             break
         }
+    }
+    
+    private var deleteButton: some View {
+        Button(action: {
+            viewModel.deleteNote(note)
+        }) {
+            Image(systemName: "trash")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 }
