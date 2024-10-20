@@ -26,7 +26,7 @@ struct NoteRowView: View {
                     noteTypeIcon
                     Text(note.timestamp, style: .time)
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.9))
+                        .foregroundColor(.white)
                     Spacer()
                     editButton
                 }
@@ -77,7 +77,7 @@ struct NoteRowView: View {
     private var noteTypeIcon: some View {
         Image(systemName: noteTypeIconName)
             .foregroundColor(.white)
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 16))
     }
     
     private var noteTypeIconName: String {
@@ -108,7 +108,7 @@ struct NoteRowView: View {
                     }
                 }) {
                     Image(systemName: isEditing ? "xmark.circle" : "pencil")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 16))
                         .foregroundColor(.white)
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -122,17 +122,18 @@ struct NoteRowView: View {
             case .text(let content):
                 Text(content)
                     .lineLimit(2)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 16))
                     .foregroundColor(.white)
             case .audio(_, let duration):
                 VStack(alignment: .leading, spacing: 4) {
                     AudioPlayerInlineView(note: note)
                         .accentColor(.white)
+                        .tint(.white)
                     if let transcription = note.transcription {
                         Text(transcription)
                             .lineLimit(2)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundColor(.white)
                     }
                 }
             case .photo(let fileName):
@@ -141,7 +142,7 @@ struct NoteRowView: View {
                         .frame(width: 70, height: 70)
                         .cornerRadius(10)
                     Text("Photo Note")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16))
                         .foregroundColor(.white)
                 }
                 .onTapGesture { showFullScreen = true }
@@ -152,11 +153,11 @@ struct NoteRowView: View {
                         .cornerRadius(10)
                     VStack(alignment: .leading) {
                         Text("Video Note")
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 16))
                             .foregroundColor(.white)
                         Text(formatDuration(duration))
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundColor(.white)
                     }
                 }
                 .onTapGesture { showFullScreen = true }
