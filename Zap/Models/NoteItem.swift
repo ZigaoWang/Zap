@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct NoteItem: Identifiable, Codable, Equatable {
+struct NoteItem: Identifiable, Codable {
     let id: UUID
     let timestamp: Date
     var type: NoteType
@@ -21,17 +21,9 @@ struct NoteItem: Identifiable, Codable, Equatable {
         self.isCompleted = isCompleted
         self.transcription = transcription
     }
-    
-    static func == (lhs: NoteItem, rhs: NoteItem) -> Bool {
-        lhs.id == rhs.id &&
-        lhs.timestamp == rhs.timestamp &&
-        lhs.type == rhs.type &&
-        lhs.isCompleted == rhs.isCompleted &&
-        lhs.transcription == rhs.transcription
-    }
 }
 
-enum NoteType: Codable, Equatable {
+enum NoteType: Codable {
     case text(String)
     case audio(String, TimeInterval)
     case photo(String)

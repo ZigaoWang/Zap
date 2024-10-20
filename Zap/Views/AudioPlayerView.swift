@@ -34,6 +34,9 @@ struct AudioPlayerView: View {
                             player?.currentTime = progress
                         }
                     }
+                    
+                    Text(formatTime(progress))
+                        .font(.caption)
                 }
                 .padding()
             }
@@ -44,12 +47,8 @@ struct AudioPlayerView: View {
         }
     }
 
-    func setupPlayer() {
+    private func setupPlayer() {
         do {
-            let audioSession = AVAudioSession.sharedInstance()
-            try audioSession.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker])
-            try audioSession.setActive(true)
-
             player = try AVAudioPlayer(contentsOf: url)
             player?.prepareToPlay()
 
@@ -67,12 +66,18 @@ struct AudioPlayerView: View {
         }
     }
 
-    func togglePlayPause() {
+    private func togglePlayPause() {
         if isPlaying {
             player?.pause()
         } else {
             player?.play()
         }
         isPlaying.toggle()
+    }
+
+    private func formatTime(_ time: Double) -> String {
+        let minutes = Int(time) / 60
+        let seconds = Int(time) % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }

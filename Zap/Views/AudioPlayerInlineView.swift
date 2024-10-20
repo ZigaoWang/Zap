@@ -10,11 +10,10 @@ import AVFoundation
 import Speech
 
 struct AudioPlayerInlineView: View {
-    @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var player: AVPlayer?
     @State private var isPlaying = false
     @State private var progress: Double = 0
-    @State private var duration: Double = 0.01  // 设置一个非零的最小值
+    @State private var duration: Double = 0.01  // Set a non-zero minimum value
     
     let note: NoteItem
     
@@ -24,7 +23,7 @@ struct AudioPlayerInlineView: View {
                 Button(action: togglePlayPause) {
                     Image(systemName: isPlaying ? "pause.circle.fill" : "play.circle.fill")
                         .font(.title)
-                        .foregroundColor(appearanceManager.accentColor)
+                        .foregroundColor(.white)
                 }
                 
                 Slider(value: $progress, in: 0...max(duration, 0.01)) { editing in
@@ -32,10 +31,11 @@ struct AudioPlayerInlineView: View {
                         player?.seek(to: CMTime(seconds: progress, preferredTimescale: 1000))
                     }
                 }
-                .accentColor(appearanceManager.accentColor)
+                .accentColor(.white)
                 
                 Text(formatTime(progress))
                     .font(.caption)
+                    .foregroundColor(.white)
             }
         }
         .onAppear(perform: setupPlayer)
