@@ -31,7 +31,15 @@ struct NoteRowView: View {
                     editButton
                 }
                 
-                noteContent
+                if isEditing {
+                    TextEditor(text: $editedContent)
+                        .frame(height: 100)
+                        .padding(4)
+                        .background(Color.white.opacity(0.2))
+                        .cornerRadius(8)
+                } else {
+                    noteContent
+                }
             }
         }
         .padding(.vertical, 12)
@@ -102,12 +110,14 @@ struct NoteRowView: View {
         Group {
             if isEditable {
                 Button(action: {
-                    isEditing.toggle()
                     if isEditing {
-                        editedContent = contentToEdit
+                        saveEdits()
+                    } else {
+                        startEditing()
                     }
+                    isEditing.toggle()
                 }) {
-                    Image(systemName: isEditing ? "xmark.circle" : "pencil")
+                    Image(systemName: isEditing ? "checkmark.circle" : "pencil")
                         .font(.system(size: 16))
                         .foregroundColor(.white)
                 }
@@ -178,6 +188,10 @@ struct NoteRowView: View {
         case .audio: return note.transcription ?? ""
         default: return ""
         }
+    }
+    
+    private func startEditing() {
+        editedContent = contentToEdit
     }
     
     private func saveEdits() {
