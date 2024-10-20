@@ -29,6 +29,7 @@ struct NoteRowView: View {
                         .foregroundColor(.white)
                     Spacer()
                     editButton
+                    deleteButton
                 }
                 
                 if isEditing {
@@ -53,21 +54,6 @@ struct NoteRowView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
-        }
-        .swipeActions(edge: .leading) {
-            Button {
-                viewModel.toggleNoteCompletion(note)
-            } label: {
-                Label(note.isCompleted ? "Uncomplete" : "Complete", systemImage: note.isCompleted ? "xmark.circle" : "checkmark.circle")
-            }
-            .tint(note.isCompleted ? .orange : .green)
-        }
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                viewModel.deleteNote(note)
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
         }
     }
     
@@ -124,6 +110,17 @@ struct NoteRowView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
+    }
+    
+    private var deleteButton: some View {
+        Button(action: {
+            viewModel.deleteNote(note)
+        }) {
+            Image(systemName: "trash")
+                .font(.system(size: 16))
+                .foregroundColor(.white)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
     
     private var noteContent: some View {
