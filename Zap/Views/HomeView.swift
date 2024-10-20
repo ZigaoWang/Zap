@@ -12,9 +12,9 @@ struct HomeView: View {
     @StateObject var viewModel = NotesViewModel()
     @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var showingSettings = false
-    @State private var selectedTab = "全部"
+    @State private var selectedTab = "All"
     
-    let tabs = ["全部", "文字", "音频", "照片", "视频"]
+    let tabs = ["All", "Text", "Audio", "Photo", "Video"]
 
     var body: some View {
         NavigationView {
@@ -117,15 +117,15 @@ struct HomeView: View {
     
     private var filteredNotes: [NoteItem] {
         switch selectedTab {
-        case "全部":
+        case "All":
             return viewModel.notes
-        case "文字":
+        case "Text":
             return viewModel.notes.filter { if case .text = $0.type { return true } else { return false } }
-        case "音频":
+        case "Audio":
             return viewModel.notes.filter { if case .audio = $0.type { return true } else { return false } }
-        case "照片":
+        case "Photo":
             return viewModel.notes.filter { if case .photo = $0.type { return true } else { return false } }
-        case "视频":
+        case "Video":
             return viewModel.notes.filter { if case .video = $0.type { return true } else { return false } }
         default:
             return viewModel.notes
@@ -134,8 +134,8 @@ struct HomeView: View {
     
     private func formattedDate() -> String {
         let formatter = DateFormatter()
-        formatter.dateFormat = "MM月dd日 EEEE"
-        formatter.locale = Locale(identifier: "zh_CN")
+        formatter.dateFormat = "MMM dd, EEEE"
+        formatter.locale = Locale(identifier: "en_US")
         return formatter.string(from: Date())
     }
 }
