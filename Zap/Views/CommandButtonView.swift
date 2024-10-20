@@ -15,9 +15,11 @@ struct CommandButton: View {
     @State private var isDragging = false
     
     private let hapticImpact = UIImpactFeedbackGenerator(style: .medium)
-    private let buttonSize: CGFloat = 60
-    private let outerCircleSize: CGFloat = 200
-    private let maxDragDistance: CGFloat = 50
+    private let buttonSize: CGFloat = 40
+    private let outerCircleSize: CGFloat = 140
+    private let maxDragDistance: CGFloat = 35
+    private let horizontalPadding: CGFloat = 15
+    private let verticalPadding: CGFloat = 50
     
     enum InputMode: String, CaseIterable {
         case center = "mic.circle.fill"
@@ -39,6 +41,12 @@ struct CommandButton: View {
     
     var body: some View {
         ZStack {
+            // White background
+            Circle()
+                .fill(Color.white)
+                .frame(width: outerCircleSize, height: outerCircleSize)
+                .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            
             Circle()
                 .fill(Color.secondary.opacity(0.2))
                 .frame(width: outerCircleSize, height: outerCircleSize)
@@ -79,6 +87,8 @@ struct CommandButton: View {
                 .animation(.easeInOut(duration: 0.2), value: isDragging)
         }
         .frame(width: outerCircleSize, height: outerCircleSize)
+        // Remove the background and clipShape modifiers
+        // Remove the position modifier to let it be positioned by its container
     }
     
     private func sectionIcon(for mode: InputMode) -> some View {
