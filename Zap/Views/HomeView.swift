@@ -12,61 +12,78 @@ struct HomeView: View {
     @StateObject var viewModel = NotesViewModel()
     @EnvironmentObject var appearanceManager: AppearanceManager
     @State private var showingSettings = false
+    @State private var selectedTab = "全部"
+    
+    let tabs = ["全部", "文字", "音频", "照片", "视频"]
 
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                if viewModel.notes.isEmpty {
-                    Text("No notes available")
-                        .foregroundColor(.secondary)
-                        .padding()
-                } else {
-                    List {
-                        ForEach(viewModel.notes) { note in
-                            NoteRowView(note: note)
-                        }
-                        .onDelete(perform: viewModel.deleteNotes)
+                // Top bar with logo, title, date, and icons
+                HStack {
+                    Image("ZapLogo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 30, height: 30)
+                        .cornerRadius(6)
+                    
+                    Text("Zap Notes")
+                        .font(.headline)
+                    
+                    Spacer()
+                    
+                    Text(formattedDate())
+                        .font(.subheadline)
+                    
+                    Button(action: {}) {
+                        Image(systemName: "magnifyingglass")
                     }
-                    .listStyle(InsetGroupedListStyle())
-                }
-
-                if let errorMessage = viewModel.errorMessage {
-                    Text(errorMessage)
-                        .foregroundColor(.red)
-                        .padding()
-                }
-
-                // Organize and Plan button
-                Button(action: {
-                    viewModel.organizeAndPlanNotes()
-                }) {
-                    HStack {
-                        Image(systemName: "wand.and.stars")
-                        Text(viewModel.isSummarizing ? "Organizing..." : "Organize & Plan")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(viewModel.isSummarizing ? Color.gray : Color.purple)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
-                }
-                .disabled(viewModel.isSummarizing)
-                .padding()
-
-                // Command button (joystick)
-                CommandButton(viewModel: viewModel)
-                    .padding()
-            }
-            .navigationTitle("Zap Notes")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         showingSettings = true
                     }) {
                         Image(systemName: "gear")
                     }
                 }
+                .padding(.horizontal)
+                .padding(.vertical, 12)
+                .background(Color(.systemBackground))
+
+                // Tab bar
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(tabs, id: \.self) { tab in
+                            Button(action: {
+                                selectedTab = tab
+                            }) {
+                                Text(tab)
+                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 10)
+                                    .background(selectedTab == tab ? appearanceManager.accentColor : Color.clear)
+                                    .foregroundColor(selectedTab == tab ? .white : .primary)
+                                    .cornerRadius(12)
+                            }
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 8)
+                .background(Color(.systemBackground))
+
+                // Notes list
+                List {
+                    ForEach(filteredNotes) { note in
+                        NoteRowView(note: note)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                    }
+                    .onDelete(perform: viewModel.deleteNotes)
+                }
+                .listStyle(PlainListStyle())
+
+                // Command button (joystick)
+                CommandButton(viewModel: viewModel)
+                    .padding(.bottom, 8)
             }
+            .navigationBarHidden(true)
         }
         .accentColor(appearanceManager.accentColor)
         .font(.system(size: appearanceManager.fontSizeValue))
@@ -96,6 +113,30 @@ struct HomeView: View {
                 viewModel.handleCapturedVideo(videoURL)
             }
         }
+    }
+    
+    private var filteredNotes: [NoteItem] {
+        switch selectedTab {
+        case "全部":
+            return viewModel.notes
+        case "文字":
+            return viewModel.notes.filter { if case .text = $0.type { return true } else { return false } }
+        case "音频":
+            return viewModel.notes.filter { if case .audio = $0.type { return true } else { return false } }
+        case "照片":
+            return viewModel.notes.filter { if case .photo = $0.type { return true } else { return false } }
+        case "视频":
+            return viewModel.notes.filter { if case .video = $0.type { return true } else { return false } }
+        default:
+            return viewModel.notes
+        }
+    }
+    
+    private func formattedDate() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MM月dd日 EEEE"
+        formatter.locale = Locale(identifier: "zh_CN")
+        return formatter.string(from: Date())
     }
 }
 

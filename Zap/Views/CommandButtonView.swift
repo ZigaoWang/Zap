@@ -43,19 +43,17 @@ struct CommandButton: View {
                 .fill(Color.secondary.opacity(0.2))
                 .frame(width: outerCircleSize, height: outerCircleSize)
             
-            // 图标
             ForEach(InputMode.allCases.filter { $0 != .center }, id: \.self) { mode in
                 sectionIcon(for: mode)
             }
             
-            // 中心按钮
             Circle()
                 .fill(viewModel.isRecording ? Color.red : currentMode.color)
                 .frame(width: buttonSize, height: buttonSize)
                 .overlay(
                     Image(systemName: viewModel.isRecording ? "stop.circle" : currentMode.rawValue)
                         .foregroundColor(.white)
-                        .font(.system(size: 30))
+                        .font(.system(size: 24))
                 )
                 .offset(dragOffset)
                 .animation(.spring(response: 0.3, dampingFraction: 0.6), value: dragOffset)
@@ -72,7 +70,6 @@ struct CommandButton: View {
                     toggleRecording()
                 }
             
-            // 发光效果
             Circle()
                 .fill(currentMode.color)
                 .frame(width: buttonSize * 1.2, height: buttonSize * 1.2)

@@ -43,6 +43,7 @@
 				SettingsView.swift,
 				TermsOfServiceView.swift,
 				TextNoteView.swift,
+				ToDoListView.swift,
 				VideoPicker.swift,
 				VideoThumbnailView.swift,
 			);

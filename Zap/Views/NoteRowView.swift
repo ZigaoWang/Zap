@@ -18,78 +18,30 @@ struct NoteRowView: View {
     @State private var editedContent = ""
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 15) {
-                Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 24))
-                    .foregroundColor(note.isCompleted ? appearanceManager.accentColor : .gray)
-                
-                VStack(alignment: .leading, spacing: 5) {
-                    HStack {
-                        Text(note.timestamp, style: .time)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        if isEditable {
-                            Button(action: {
-                                isEditing.toggle()
-                                if isEditing {
-                                    editedContent = contentToEdit
-                                }
-                            }) {
-                                Image(systemName: isEditing ? "xmark.circle" : "pencil")
-                                    .foregroundColor(.blue)
-                            }
-                        }
-                    }
-                    
-                    Group {
-                        switch note.type {
-                        case .text(let content):
-                            Text(content)
-                        case .audio(let fileName, let duration):
-                            AudioPlayerInlineView(note: note)
-                            if let transcription = note.transcription {
-                                Text(transcription)
-                            }
-                        case .photo(let fileName):
-                            ImagePreviewView(fileName: fileName)
-                                .onTapGesture {
-                                    showFullScreen = true
-                                }
-                        case .video(let fileName, let duration):
-                            VideoPreviewView(fileName: fileName)
-                                .onTapGesture {
-                                    showFullScreen = true
-                                }
-                        }
-                    }
-                }
-            }
+        HStack(spacing: 12) {
+            completionButton
             
-            if isEditing {
-                VStack {
-                    TextEditor(text: $editedContent)
-                        .frame(height: 100)
-                        .border(Color.gray, width: 1)
-                    
-                    HStack {
-                        Spacer()
-                        Button("Save") {
-                            saveEdits()
-                            isEditing = false
-                        }
-                        .foregroundColor(.blue)
-                    }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    noteTypeIcon
+                    Text(note.timestamp, style: .time)
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.9))
+                    Spacer()
+                    editButton
                 }
-                .padding(.top, 4)
-                .transition(.opacity)
+                
+                noteContent
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 12)
         .padding(.horizontal, 16)
-        .background(colorScheme == .dark ? Color(.systemGray6) : Color(.systemBackground))
-        .opacity(note.isCompleted ? 0.6 : 1)
+        .background(noteBackgroundColor)
+        .cornerRadius(16)
+        .shadow(color: noteBackgroundColor.opacity(0.3), radius: 5, x: 0, y: 3)
+        .opacity(note.isCompleted ? 0.7 : 1)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 6)
         .animation(.spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0), value: note.isCompleted)
         .fullScreenCover(isPresented: $showFullScreen) {
             FullScreenMediaView(note: note, isPresented: $showFullScreen)
@@ -111,23 +63,119 @@ struct NoteRowView: View {
         }
     }
     
+    private var completionButton: some View {
+        Button(action: {
+            viewModel.toggleNoteCompletion(note)
+        }) {
+            Image(systemName: note.isCompleted ? "checkmark.circle.fill" : "circle")
+                .font(.system(size: 24))
+                .foregroundColor(.white)
+        }
+        .buttonStyle(PlainButtonStyle())
+    }
+    
+    private var noteTypeIcon: some View {
+        Image(systemName: noteTypeIconName)
+            .foregroundColor(.white)
+            .font(.system(size: 16, weight: .semibold))
+    }
+    
+    private var noteTypeIconName: String {
+        switch note.type {
+        case .text: return "text.bubble.fill"
+        case .audio: return "mic.circle.fill"
+        case .photo: return "camera.fill"
+        case .video: return "video.fill"
+        }
+    }
+    
+    private var noteBackgroundColor: Color {
+        switch note.type {
+        case .text: return .green
+        case .audio: return .blue
+        case .photo: return .orange
+        case .video: return .red
+        }
+    }
+    
+    private var editButton: some View {
+        Group {
+            if isEditable {
+                Button(action: {
+                    isEditing.toggle()
+                    if isEditing {
+                        editedContent = contentToEdit
+                    }
+                }) {
+                    Image(systemName: isEditing ? "xmark.circle" : "pencil")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+        }
+    }
+    
+    private var noteContent: some View {
+        Group {
+            switch note.type {
+            case .text(let content):
+                Text(content)
+                    .lineLimit(2)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white)
+            case .audio(_, let duration):
+                VStack(alignment: .leading, spacing: 4) {
+                    AudioPlayerInlineView(note: note)
+                        .accentColor(.white)
+                    if let transcription = note.transcription {
+                        Text(transcription)
+                            .lineLimit(2)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+            case .photo(let fileName):
+                HStack {
+                    ImagePreviewView(fileName: fileName)
+                        .frame(width: 70, height: 70)
+                        .cornerRadius(10)
+                    Text("Photo Note")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                }
+                .onTapGesture { showFullScreen = true }
+            case .video(let fileName, let duration):
+                HStack {
+                    VideoPreviewView(fileName: fileName)
+                        .frame(width: 70, height: 70)
+                        .cornerRadius(10)
+                    VStack(alignment: .leading) {
+                        Text("Video Note")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white)
+                        Text(formatDuration(duration))
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                }
+                .onTapGesture { showFullScreen = true }
+            }
+        }
+    }
+    
     private var isEditable: Bool {
         switch note.type {
-        case .text, .audio:
-            return true
-        default:
-            return false
+        case .text, .audio: return true
+        default: return false
         }
     }
     
     private var contentToEdit: String {
         switch note.type {
-        case .text(let content):
-            return content
-        case .audio:
-            return note.transcription ?? ""
-        default:
-            return ""
+        case .text(let content): return content
+        case .audio: return note.transcription ?? ""
+        default: return ""
         }
     }
     
@@ -140,5 +188,13 @@ struct NoteRowView: View {
         default:
             break
         }
+    }
+    
+    private func formatDuration(_ duration: TimeInterval) -> String {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.minute, .second]
+        formatter.unitsStyle = .positional
+        formatter.zeroFormattingBehavior = .pad
+        return formatter.string(from: duration) ?? "0:00"
     }
 }

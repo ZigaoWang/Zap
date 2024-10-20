@@ -126,6 +126,11 @@ class NotesViewModel: ObservableObject {
             let asset = AVAsset(url: audioURL)
             let duration = asset.duration.seconds
             addAudioNote(fileName: audioURL.lastPathComponent, duration: duration)
+            
+            // Start transcription asynchronously
+            Task {
+                await transcribeAudioNote(NoteItem(type: .audio(audioURL.lastPathComponent, duration)))
+            }
         }
         
         audioRecorder = nil
